@@ -1,0 +1,4 @@
+node_modules
+dist
+**/.BROWSE*
+npm-debug.log

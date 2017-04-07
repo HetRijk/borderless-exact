@@ -1,0 +1,41 @@
+{
+  "name": "borderless-exact",
+  "version": "0.0.1",
+  "description": "Tickle me",
+  "main": "dist/main/index.js",
+  "typings": "dist/main/index",
+  "engines": {
+    "node": ">=6"
+  },
+  "scripts": {
+    "pretest": "tsc",
+    "checkstyle": "tslint -c tslint.json 'src/**/*.ts' -t stylish",
+    "prestart": "tsc",
+    "test": "mocha --colors --recursive --require source-map-support/register dist/test",
+    "build": "tsc",
+    "start": "node dist/main/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:wordempire/borderless-exact.git"
+  },
+  "keywords": [
+    "borderless-exact"
+  ],
+  "author": "Jelle Licht",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/mocha": "^2.2.37",
+    "@types/node": "^7.0.0",
+    "@types/sinon": "^1.16.34",
+    "mocha": "^3.2.0",
+    "mocha-clean": "^1.0.0",
+    "moq.ts": "^1.0.0",
+    "sinon": "^1.17.7",
+    "source-map-support": "0.4.10",
+    "tslint": "^4.3.1",
+    "typemoq": "^1.1.0",
+    "typescript": "^2.2.1"
+  }
+}
