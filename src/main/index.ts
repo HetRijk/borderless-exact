@@ -1,13 +1,14 @@
-import { Calculator } from './models/';
+// Libraries
 import * as passport from 'passport';
 import * as OAuth2Strategy from 'passport-oauth2';
 import * as express from 'express';
 import * as opn from 'opn';
-const app = express();
-import * as eo from 'exact-online';
-import TokenWrapper from './utils/TokenWrapper';
-export default Calculator;
 
+// Homebrew
+import TokenWrapper from './utils/TokenWrapper';
+
+// Constants
+const app = express();
 const CLIENT_ID = 'f5fcbe04-c19e-45c4-8aa5-f9316d70bb0d';
 const CLIENT_SECRET = 'WhKLQKKQjkOY';
 const CB_URL = 'http://localhost:3000/auth/callback';
@@ -30,6 +31,7 @@ passport.use(new OAuth2Strategy({
   clientSecret: CLIENT_SECRET,
   callbackURL: CB_URL,
 }, (accessToken, refreshToken, profile, cb) => {
+  tokenWrapper.initialise(refreshToken);
   return cb(null, true);
 }));
 
