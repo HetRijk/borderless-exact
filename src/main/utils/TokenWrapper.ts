@@ -38,7 +38,7 @@ export default class TokenWrapper {
           resolve(token);
         }
       };
-      return this.getToken(wrapCallback);
+      this.getToken(wrapCallback);
     });
   }
 

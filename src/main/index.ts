@@ -6,6 +6,7 @@ import * as opn from 'opn';
 
 // Homebrew
 import TokenWrapper from './utils/TokenWrapper';
+import Exact from '../Exact';
 
 // Constants
 const app = express();
@@ -60,6 +61,24 @@ app.get('/verify',
           };
           tokenWrapper.getToken(tokenLogger);
         });
+
+
+app.get('/test', async (req: express.Request , res: express.Response) => {
+  try {
+    res.setHeader('Content-Type', 'text/html');
+    var e = new Exact(tokenWrapper);
+    await e.testInternet();
+    await e.initAPI()
+    await e.getMe();
+    let myName = await e.getMyName();
+    let contacts = await e.listContacts();
+    let names = contacts.map(x => x.AccountName);
+    //console.dir(contacts);
+    res.send(names.join('<br>\n'));
+  } catch(e) {
+    res.send(JSON.stringify(e));
+  }
+});
 
 app.listen(3000,  () => {
   console.log('Example app listening on port 3000!')
