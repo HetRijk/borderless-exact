@@ -29,6 +29,19 @@ export default class TokenWrapper {
     });
   }
 
+  public getTokenPromise() {
+    return new Promise((resolve, reject) => {
+      const wrapCallback = (err: any, token: string) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(token);
+        }
+      };
+      return this.getToken(wrapCallback);
+    });
+  }
+
   public getToken( callback: ((err: any, token: string) => any)) {
     if (!this._initialised) {
       throw new Error('Trying to get token from uninitialised TokenWrapper');
