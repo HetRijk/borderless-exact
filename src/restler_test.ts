@@ -21,6 +21,11 @@ rest.get(url_base + cur_div + '/' + 'Me', {
   },
   accessToken: token,
 }).on('complete', function(data) {
+  if (typeof(data) == 'string') {
+    console.log('Error retreiving data, probably not authorized. Response was: ');
+    console.log(data);
+    return;
+  }
   console.dir(data.d.results[0]);
   cur_div = data.d.results[0].CurrentDivision;
   console.log('Succesful connection with Exact REST API, CurrentDivision = ' + cur_div);
