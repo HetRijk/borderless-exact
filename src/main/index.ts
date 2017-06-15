@@ -10,6 +10,16 @@ export default Calculator;
 let CLIENT_ID = 'f5fcbe04-c19e-45c4-8aa5-f9316d70bb0d';
 let CLIENT_SECRET = 'WhKLQKKQjkOY';
 let CB_URL = "http://localhost:3000/auth/callback";
+// TODO: wtf, y we need this.
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
+
+passport.deserializeUser((user, done) => {
+  done(null, user);
+});
+
+
 passport.use(new OAuth2Strategy({
   authorizationURL: 'https://start.exactonline.nl/api/oauth2/auth',
   tokenURL: 'https://start.exactonline.nl/api/oauth2/token',
