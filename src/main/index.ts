@@ -42,8 +42,10 @@ app.get('/auth',
 app.get('/auth/callback',
         passport.authenticate('oauth2', { failureRedirect: '/login' }),
         (req: express.Request , res: express.Response) => {
-          res.setHeader('Content-Type', 'application/json');
-          res.send(JSON.stringify({ message: 'auth complete' }));
+          res.setHeader('Content-Type', 'text/html');
+          res.send(JSON.stringify({ message: 'auth complete' }) +
+                   '<a href="/verify">verify</a> \
+                   <a href="/test">test</a>');
         });
 
 app.get('/verify',
