@@ -21,13 +21,16 @@ export default class Exact {
       console.log('Internet OK');
       return true;
     } catch(e) {
-      console.log('Internet KAPOT');
+      console.log('Internet KAPOT:');
       console.error(e);
       return false;
     }
   }
 
-  public async query(what : string, filter = '', select = '') {
+  // params is an object with Exact API parameters, eg:
+  // params: {$select: 'CurrentDivision'}
+  // or {$filter: '...'}
+  public async query(what : string, params = {}) {
     var url = '';
 
     if (what == 'Me') {
@@ -39,52 +42,76 @@ export default class Exact {
       url = this._baseURL + this._currentDivision + '/' + what;
     }
 
-    let token = await this._tokenWrapper.getTokenPromise();
-
     try {
+      let token = await this._tokenWrapper.getTokenPromise();
+
       let reply = await restler.get(url, {
           accessToken: token,
           headers: {'accept': 'application/json'},
-          query: {
-            '$filter': filter,
-            '$select': select
-          }
+          query: params,
         });
 
-      //console.dir(data);
-      return reply.data.d.results;
+      // Todo: add some mechanism to stop
+      // Eg: yielding / Stream
+      while('__next' in reply.data.d) {
+        console.log('Loading next batch of results...');
+        let nexturl = reply.data.d.__next;
+        let results = reply.data.d.results;
+        reply = await restler.get(nexturl, {
+            accessToken: token,
+            headers: {'accept': 'application/json'}
+        });
+        reply.data.d.results = results.concat(reply.data.d.results);
+      }
+
+      console.log('Successful query for "' + what + '"');
+      //console.dir(reply);
+      //console.dir(reply.data.d);
+
+      // For some reason certain querys (with $top=1) dont containt the reults field
+      if('results' in reply.data.d) {
+        return reply.data.d.results;
+      } else {
+        return reply.data.d;
+      }
+
     } catch(e) {
+      console.log('Error while querying "' + what + '"');
       console.error(e);
-      throw e;
+      //throw e; -werkt niet voor asynchroon oid
     }
   }
 
   public async initAPI() {
-    let data = await this.query('Me', '', 'CurrentDivision');
+    let data = await this.query('Me', {$select: 'CurrentDivision'});
     this._currentDivision = data[0].CurrentDivision;
     console.log('Succesful connection with Exact REST API (CurrentDivision = ' + this._currentDivision + ')');
   }
 
-  // Example query
-  public getMe() {
-    return this.query('Me').then( (data) => {
-      data = data[0];
-      //console.dir(data);
-      return data;
-    });
+  // Query 'Me' object
+  public async getMe() {
+    let people = await this.query('Me');
+    return people[0];
   }
 
   // Example query with select
   public async getMyName() {
-    let people = await this.query('Me', '', 'FullName');
+    let people = await this.query('Me', {$select: 'FullName'});
     let me = people[0];
     console.log('Hi, my name is ' + me.FullName);
     return me.FullName;
   }
 
-
+  // Example query: list contacts
   public async listContacts() {
      return await this.query('crm/Contacts');
+  }
+
+  // Example: account names
+  public async listAccountNames() {
+     let contacts = await this.query('crm/Accounts', {$select:'Name'});
+     let names = contacts.map(x => x.Name);
+     return names;
   }
 
 
