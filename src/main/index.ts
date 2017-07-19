@@ -78,16 +78,85 @@ app.get('/user/:accId', async (req: express.Request, res: express.Response) => {
   }
 });
 
+// Convert a Microsoft AJAX date string (from the Exact API) to a human readable format
+// e.g. "Date(012345687)" to "2017-05-26"
 let fixDate = (d) => {
   var date = new Date(parseInt(d.substr(6)));
   return date.toISOString().substring(0, 10);
 }
 
 let formatMoney = (n) => {
-    let s = n < 0 ? "-" : "+";
-    let str = Math.abs(n).toFixed(2);
-    return '€ ' + s + "&nbsp;&nbsp;&nbsp;&nbsp;".substring(0, 6*(6 - str.length)) + str;
-  };
+  let s = n < 0 ? "-" : "+";
+  let str = Math.abs(n).toFixed(2);
+  return '€ ' + s + "&nbsp;&nbsp;&nbsp;&nbsp;".substring(0, 6*(6 - str.length)) + str;
+};
+
+
+// Turn an array of transactions into an HTML formatted table
+let makeTransactionTable = (trans, endSaldo) : string => {
+  let tblStr = '<table style="border-spacing: 7pt 0pt">\n';
+
+  tblStr = tblStr + "<tr>"
+        + '<th style="text-align: left">' + "Periode</th>"
+        + '<th style="text-align: left">' + "Datum</th>"
+        + '<th style="text-align: left">' + "Omschrijving</th>"
+        + '<th style="text-align: right">' + "Uit (€)</th>"
+        + '<th style="text-align: right">' + "In (€)</th>"
+        + "</tr>\n";
+
+  let rows = trans.map(x => "<tr>"
+    + "<td>" + x.FinancialYear + '.' + x.FinancialPeriod + "</td>"
+    + "<td>" + fixDate(x.Date) + "</td>"
+    + "<td>" + x.Description + "</td>"
+    + '<td style="color: red; text-align: right">' + ((-x.AmountDC < 0) ? (-x.AmountDC).toFixed(2) : "") + "</td>"
+    + '<td style="color: green; text-align: right">' + ((-x.AmountDC >= 0) ? (-x.AmountDC).toFixed(2) : "") + "</td>"
+    + "</tr>\n");
+
+  tblStr = tblStr + rows.join('');
+
+  let outSum = trans.map(x => (-x.AmountDC < 0) ? -x.AmountDC : 0).reduce((a,b)=>a+b, 0);
+  let inSum = trans.map(x => (-x.AmountDC > 0) ? -x.AmountDC : 0).reduce((a,b)=>a+b, 0);
+  let saldo = inSum + outSum;
+
+  tblStr = tblStr + "<tr><td>&nbsp;</td></tr>\n";
+
+  tblStr = tblStr + "<tr>"
+    + "<td>" + "</td>"
+    + "<td>" + "</td>"
+    + '<th style="text-align: left">' + "Totaal" + "</th>"
+    + '<td style="color: red; text-align: right">' + outSum.toFixed(2) + "</td>"
+    + '<td style="color: green; text-align: right">' + inSum.toFixed(2) + "</td>"
+    + "</tr>\n";
+
+  tblStr = tblStr + "<tr><td>&nbsp;</td></tr>\n";
+
+  let startSaldo = 0;
+  if(endSaldo) {
+    startSaldo = endSaldo - saldo;
+  }
+
+  let posnul = (d) => (d > 0 || d.toFixed(2) == "0.00" || d.toFixed(2) == "-0.00");
+
+  tblStr = tblStr + "<tr>"
+    + "<td>" + "</td>"
+    + "<td>" + "</td>"
+    + '<th style="text-align: left">' + "Beginsaldo:" + "</th>"
+    + '<td style="color: red; text-align: right">' + ((startSaldo < 0) ? startSaldo.toFixed(2) : "") + "</td>"
+    + '<td style="color: green; text-align: right">' + (posnul(startSaldo) ? startSaldo.toFixed(2) : "") + "</td>"
+    + "</tr>\n";
+
+  tblStr = tblStr + "<tr>"
+    + "<td>" + "</td>"
+    + "<td>" + "</td>"
+    + '<th style="text-align: left">' + "Saldo:" + "</th>"
+    + '<td style="color: red; text-align: right">' + ((saldo < 0) ? saldo.toFixed(2) : "") + "</td>"
+    + '<td style="color: green; text-align: right">' + (posnul(saldo) ? saldo.toFixed(2) : "") + "</td>"
+    + "</tr>\n";
+
+  tblStr = tblStr + "</table>\n";
+
+  return tblStr;
+}
 
 app.get('/trans/:accId/:year*?', async (req: express.Request, res: express.Response) => {
   try {
@@ -112,6 +181,7 @@ app.get('/trans/:accId/:year*?', async (req: express.Request, res: express.Respo
       res.write(years.map(x => '<a href="/trans/' + req.params.accId + '/' + x + '">' + x + '</a> ').join(' '));
       res.write('<br><br>');
 
+      // Compute saldo as the sum of all transaction amounts
       let saldo = trans.map(x => -x.AmountDC).reduce((a,b)=>a+b, 0);
 
       let yearSaldo = 0;
@@ -122,15 +192,18 @@ app.get('/trans/:accId/:year*?', async (req: express.Request, res: express.Respo
       let startSaldo = saldo - yearSaldo;
 
       let tlist = trans
-        .map(x => x.FinancialYear + '.' + x.FinancialPeriod + ' - ' + fixDate(x.Date)
-        + " - <kbd>" + formatMoney(-x.AmountDC) + '</kbd> - ' + x.Description);
+        .map(x => x.FinancialYear + '.' + x.FinancialPeriod + ' | ' + fixDate(x.Date)
+        + " | <kbd>" + formatMoney(-x.AmountDC) + '</kbd> | ' + x.Description);
 
       //console.dir(contacts);
       res.write(tlist.join('<br>\n'));
       res.write('<br><br>');
+      res.write(makeTransactionTable(trans, saldo));
+      res.write('<br><br>');
+
       res.write('Start saldo: ' + formatMoney(startSaldo) + '<br>');
       res.write('Year saldo: ' + formatMoney(yearSaldo) + '<br>');
-      res.write('Saldo: ' + formatMoney(saldo));
+      res.write('End saldo: ' + formatMoney(saldo));
       res.end();
   } catch(e) {
     console.dir(e);
