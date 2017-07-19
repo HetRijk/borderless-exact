@@ -2,7 +2,7 @@ import * as passport from 'passport';
 import * as OAuth2Strategy from 'passport-oauth2';
 import * as express from 'express';
 import * as url from 'url';
-import * as config from '../../../config/auth-config.json';
+import * as config from '../../config/auth-config.json';
 
 import TokenWrapper from './TokenWrapper';
 /*
