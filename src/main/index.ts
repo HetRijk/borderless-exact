@@ -6,23 +6,61 @@ import * as passport from 'passport';
 import * as OAuth2Strategy from 'passport-oauth2';
 import * as express from 'express';
 import * as opn from 'opn';
+import * as nodemailer from 'nodemailer';
 
 // Homebrew
-import TokenWrapper from './utils/TokenWrapper';
-import Exact from '../Exact';
-import AuthBootstrap from './utils/auth-bootstrap';
+import TokenWrapper from '../utils/TokenWrapper';
+import AuthBootstrap from '../utils/auth-bootstrap';
+import Exact from './Exact';
 
 // Constants
 const app = express();
 
+
 const injector = new AuthBootstrap();
 const tokenWrapper = injector.getTokenWrapper();
 injector.hookServer(app, '/auth', (req: express.Request , res: express.Response) => {
-  res.setHeader('Content-Type', 'text/html');
   res.send(JSON.stringify({ message: 'auth complete' }) +
            '<a href="/verify">verify</a> \
 <a href="/test">test</a>');
 });
+
+
+
+// create reusable transporter object using the default SMTP transport
+let mailTransporter = nodemailer.createTransport({
+    service: "Gmail",
+    auth: {
+      XOAuth2: {
+        user: 'aegee.delft@gmail.com',
+        clientId: "your_client_id",
+        clientSecret: "your_client_secret",
+        refreshToken: "your_refresh_token"
+      }
+    }
+});
+
+app.get('/mail', async (req: express.Request, res: express.Response) => {
+  try {
+      let mailOptions = {
+        from: '"Treasurer AEGEE-Delft" <treasurer@aegee-delft>',
+        to: '"Je Moeder" <tjeerdvanaalst@gmail.com>',
+        subject: 'Test mailsysteem',
+        text: 'message - test',
+        html: 'html <b> test </b>',
+      };
+
+      let info = await mailTransporter.sendMail(mailOptions);
+      console.log('Message %s sent: %s', info.messageId, info.response);
+
+
+      res.json({});
+  } catch(e) {
+    res.json(e);
+    console.dir(e);
+  }
+});
+
 
 var e;
 
@@ -214,6 +252,6 @@ app.get('/trans/:accId/:year*?', async (req: express.Request, res: express.Respo
 
 
 app.listen(3000,  () => {
-  console.log('Example app listening on port 3000!')
+  console.log('Listening on http://localhost:3000/');
   opn('http://localhost:3000/auth/');
 });

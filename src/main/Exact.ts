@@ -3,7 +3,7 @@
 import * as restlerPromise from 'restler-promise';
 const restler = restlerPromise(Promise);
 
-import TokenWrapper from './main/utils/TokenWrapper';
+import TokenWrapper from '../utils/TokenWrapper';
 
 export default class Exact {
   private _baseURL : string;
