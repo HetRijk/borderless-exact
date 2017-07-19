@@ -115,6 +115,35 @@ export default class Exact {
   }
 
 
+  // AEGEE Exact stuff
+  public async getAccount(id) {
+    let contact = await this.query('crm/Accounts', {
+      $filter: "ID eq guid'" + id + "'",
+      $top: '1',
+    });
+    return contact[0];
+  }
+
+  public async getDebtors() {
+      return this.query('crm/Accounts', {
+        $select: 'ID,Code,Name,Email',
+        $orderby: 'Code',
+        $filter: 'IsSales eq true and IsSupplier eq true',
+      });
+  }
+
+  // Get transactions for specified account
+  //
+  public async getTransactions(accountID) {
+    return this.query('financialtransaction/TransactionLines', {
+      $select: 'Description,AmountDC,Date,FinancialYear,FinancialPeriod',
+      $filter: "Account eq guid'" + accountID + "'" +
+        " and (GLAccountCode eq trim('1400') or GLAccountCode eq trim('1500'))", // Debiteuren of Crediteuren grootboeken
+        $orderby: 'Date',
+    });
+  }
+
+
 }
 
 // Todo:

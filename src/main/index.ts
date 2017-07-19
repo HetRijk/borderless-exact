@@ -114,18 +114,11 @@ app.get('/users', async (req: express.Request , res: express.Response) => {
     res.type('html');
     res.write('Listing all users...<br>\n');
 
-    //let contacts = await e.listContacts();
-    let contacts = await e.query('crm/Accounts', {
-      $select: 'ID,Code,Name,Email',
-      $orderby: 'Code',
-      $filter: 'IsSales eq true and IsSupplier eq true',
-    });
-    //contacts = contacts.filter(x => x.IsSales && x.IsSupplier);
-
+    let contacts = await e.getDebtors();
     let names = contacts.map(x => x.Code + ' - ' + '<a href="/trans/' + x.ID + '">' + x.Name + '</a> (' + x.Email + ')');
+
     res.write('Debiteuren/Crediteuren:<br>');
     res.write(names.join('<br>\n'));
-
     res.end();
   } catch(e) {
     res.json(e);
@@ -229,19 +222,10 @@ app.get('/trans/:accId/:year*?', async (req: express.Request, res: express.Respo
     res.type('html');
     res.charset = 'utf-8';
 
-    let contact = await e.query('crm/Accounts', {
-      $filter: "ID eq guid'" + req.params.accId + "'",
-      $top: '1',
-    });
-    contact = contact[0];
+    let contact = await e.getAccount(req.params.accId);
     res.write('Listing transaction lines for ' + contact.Name + ':<br><br>\n');
 
-    let trans = await e.query('financialtransaction/TransactionLines', {
-      $select: 'Description,AmountDC,Date,FinancialYear,FinancialPeriod',
-      $filter: "Account eq guid'" + req.params.accId + "'" +
-        " and (GLAccountCode eq trim('1400') or GLAccountCode eq trim('1500'))", // Debiteuren of Crediteuren grootboeken
-        $orderby: 'Date',
-    });
+    let trans = await e.getTransactions(req.params.accId);
 
     let years = [...new Set(trans.map(x => x.FinancialYear))];
     res.write(years.map(x => '<a href="/trans/' + req.params.accId + '/' + x + '">' + x + '</a> ').join(' '));
