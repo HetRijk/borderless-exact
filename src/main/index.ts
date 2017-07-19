@@ -36,22 +36,35 @@ let mailSettings : MailSettings;
 
 const injector = new AuthBootstrap();
 const tokenWrapper = injector.getTokenWrapper();
-injector.hookServer(app, '/auth', (req: express.Request , res: express.Response) => {
-  res.send(JSON.stringify({ message: 'auth complete' }) +
-           '<a href="/verify">verify</a> \
-           <a href="/mail-form.html">mail-form</a> \
-           <a href="/send-mail">send-mail</a> \
-<a href="/test">test</a>');
+injector.hookServer(app, '/auth', async (req: express.Request , res: express.Response) => {
+  try {
+    e = new Exact(tokenWrapper);
+    await e.testInternet();
+    await e.initAPI()
+    res.redirect('/');
+  } catch(e) {
+    res.json(e);
+  }
 });
 
-app.get('/', (req: express.Request , res: express.Response) => {
-  res.send(JSON.stringify({ message: 'auth complete' }) +
-           '<a href="/verify">verify</a> \
-<a href="/mail-form.html">mail-form</a> \
-<a href="/send-mail">send-mail</a> \
-<a href="/test">test</a>');
-});
 
+app.get('/', async (req: express.Request , res: express.Response) => {
+  try {
+    if(!e) {
+      res.redirect('/auth');
+    }
+
+    res.type('html');
+    res.write('Logged in as ' + await e.getMyName() + '.<br><br>\n');
+    res.write('<a href="/verify">Verify</a><br>\n');
+    res.write('<a href="/users">List users</a><br>\n');
+    res.write('<a href="/mail-form.html">Enter mail settings</a><br>\n');
+    res.write('<a href="/send-mail">Send test email</a><br>\n');
+    res.end();
+  } catch(e) {
+    res.json(e);
+  }
+});
 
 app.post('/save-settings', (req: express.Request, res: express.Response) => {
   let {server, email, password} = req.body;
@@ -96,14 +109,10 @@ app.get('/verify',
           tokenWrapper.getToken(tokenLogger);
         });
 
-app.get('/test', async (req: express.Request , res: express.Response) => {
+app.get('/users', async (req: express.Request , res: express.Response) => {
   try {
-    e = new Exact(tokenWrapper);
-    await e.testInternet();
-    await e.initAPI()
-    let myName = await e.getMyName();
     res.type('html');
-    res.write('Logged in as ' + myName + '<br><br>');
+    res.write('Listing all users...<br>\n');
 
     //let contacts = await e.listContacts();
     let contacts = await e.query('crm/Accounts', {
@@ -125,11 +134,11 @@ app.get('/test', async (req: express.Request , res: express.Response) => {
 
 app.get('/user/:accId', async (req: express.Request, res: express.Response) => {
   try {
-      let contact = await e.query('crm/Accounts', {
-          $filter: "ID eq guid'" + req.params.accId + "'",
-          $top: '1',
-        });
-      res.json(contact);
+    let contact = await e.query('crm/Accounts', {
+      $filter: "ID eq guid'" + req.params.accId + "'",
+      $top: '1',
+    });
+    res.json(contact);
   } catch(e) {
     res.json(e);
   }
@@ -154,20 +163,20 @@ let makeTransactionTable = (trans, endSaldo) : string => {
   let tblStr = '<table style="border-spacing: 7pt 0pt">\n';
 
   tblStr = tblStr + "<tr>"
-        + '<th style="text-align: left">' + "Periode</th>"
-        + '<th style="text-align: left">' + "Datum</th>"
-        + '<th style="text-align: left">' + "Omschrijving</th>"
-        + '<th style="text-align: right">' + "Uit (€)</th>"
-        + '<th style="text-align: right">' + "In (€)</th>"
-        + "</tr>\n";
+    + '<th style="text-align: left">' + "Periode</th>"
+    + '<th style="text-align: left">' + "Datum</th>"
+    + '<th style="text-align: left">' + "Omschrijving</th>"
+    + '<th style="text-align: right">' + "Uit (€)</th>"
+    + '<th style="text-align: right">' + "In (€)</th>"
+    + "</tr>\n";
 
   let rows = trans.map(x => "<tr>"
-    + "<td>" + x.FinancialYear + '.' + x.FinancialPeriod + "</td>"
-    + "<td>" + fixDate(x.Date) + "</td>"
-    + "<td>" + x.Description + "</td>"
-    + '<td style="color: red; text-align: right">' + ((-x.AmountDC < 0) ? (-x.AmountDC).toFixed(2) : "") + "</td>"
-    + '<td style="color: green; text-align: right">' + ((-x.AmountDC >= 0) ? (-x.AmountDC).toFixed(2) : "") + "</td>"
-    + "</tr>\n");
+                       + "<td>" + x.FinancialYear + '.' + x.FinancialPeriod + "</td>"
+                       + "<td>" + fixDate(x.Date) + "</td>"
+                       + "<td>" + x.Description + "</td>"
+                       + '<td style="color: red; text-align: right">' + ((-x.AmountDC < 0) ? (-x.AmountDC).toFixed(2) : "") + "</td>"
+                       + '<td style="color: green; text-align: right">' + ((-x.AmountDC >= 0) ? (-x.AmountDC).toFixed(2) : "") + "</td>"
+                       + "</tr>\n");
 
   tblStr = tblStr + rows.join('');
 
@@ -217,51 +226,51 @@ let makeTransactionTable = (trans, endSaldo) : string => {
 
 app.get('/trans/:accId/:year*?', async (req: express.Request, res: express.Response) => {
   try {
-      res.type('html');
-      res.charset = 'utf-8';
+    res.type('html');
+    res.charset = 'utf-8';
 
-      let contact = await e.query('crm/Accounts', {
-          $filter: "ID eq guid'" + req.params.accId + "'",
-          $top: '1',
-        });
-      contact = contact[0];
-      res.write('Listing transaction lines for ' + contact.Name + ':<br><br>\n');
+    let contact = await e.query('crm/Accounts', {
+      $filter: "ID eq guid'" + req.params.accId + "'",
+      $top: '1',
+    });
+    contact = contact[0];
+    res.write('Listing transaction lines for ' + contact.Name + ':<br><br>\n');
 
-      let trans = await e.query('financialtransaction/TransactionLines', {
-          $select: 'Description,AmountDC,Date,FinancialYear,FinancialPeriod',
-          $filter: "Account eq guid'" + req.params.accId + "'" +
-                   " and (GLAccountCode eq trim('1400') or GLAccountCode eq trim('1500'))", // Debiteuren of Crediteuren grootboeken
-          $orderby: 'Date',
-        });
+    let trans = await e.query('financialtransaction/TransactionLines', {
+      $select: 'Description,AmountDC,Date,FinancialYear,FinancialPeriod',
+      $filter: "Account eq guid'" + req.params.accId + "'" +
+        " and (GLAccountCode eq trim('1400') or GLAccountCode eq trim('1500'))", // Debiteuren of Crediteuren grootboeken
+        $orderby: 'Date',
+    });
 
-      let years = [...new Set(trans.map(x => x.FinancialYear))];
-      res.write(years.map(x => '<a href="/trans/' + req.params.accId + '/' + x + '">' + x + '</a> ').join(' '));
-      res.write('<br><br>');
+    let years = [...new Set(trans.map(x => x.FinancialYear))];
+    res.write(years.map(x => '<a href="/trans/' + req.params.accId + '/' + x + '">' + x + '</a> ').join(' '));
+    res.write('<br><br>');
 
-      // Compute saldo as the sum of all transaction amounts
-      let saldo = trans.map(x => -x.AmountDC).reduce((a,b)=>a+b, 0);
+    // Compute saldo as the sum of all transaction amounts
+    let saldo = trans.map(x => -x.AmountDC).reduce((a,b)=>a+b, 0);
 
-      let yearSaldo = 0;
-      if('year' in req.params && req.params.year) {
-        trans = trans.filter(x => x.FinancialYear == req.params.year);
-        yearSaldo = trans.map(x => -x.AmountDC).reduce((a,b)=>a+b, 0);
-      }
-      let startSaldo = saldo - yearSaldo;
+    let yearSaldo = 0;
+    if('year' in req.params && req.params.year) {
+      trans = trans.filter(x => x.FinancialYear == req.params.year);
+      yearSaldo = trans.map(x => -x.AmountDC).reduce((a,b)=>a+b, 0);
+    }
+    let startSaldo = saldo - yearSaldo;
 
-      let tlist = trans
-        .map(x => x.FinancialYear + '.' + x.FinancialPeriod + ' | ' + fixDate(x.Date)
-        + " | <kbd>" + formatMoney(-x.AmountDC) + '</kbd> | ' + x.Description);
+    let tlist = trans
+      .map(x => x.FinancialYear + '.' + x.FinancialPeriod + ' | ' + fixDate(x.Date)
+           + " | <kbd>" + formatMoney(-x.AmountDC) + '</kbd> | ' + x.Description);
 
-      //console.dir(contacts);
-      res.write(tlist.join('<br>\n'));
-      res.write('<br><br>');
-      res.write(makeTransactionTable(trans, saldo));
-      res.write('<br><br>');
+    //console.dir(contacts);
+    res.write(tlist.join('<br>\n'));
+    res.write('<br><br>');
+    res.write(makeTransactionTable(trans, saldo));
+    res.write('<br><br>');
 
-      res.write('Start saldo: ' + formatMoney(startSaldo) + '<br>');
-      res.write('Year saldo: ' + formatMoney(yearSaldo) + '<br>');
-      res.write('End saldo: ' + formatMoney(saldo));
-      res.end();
+    res.write('Start saldo: ' + formatMoney(startSaldo) + '<br>');
+    res.write('Year saldo: ' + formatMoney(yearSaldo) + '<br>');
+    res.write('End saldo: ' + formatMoney(saldo));
+    res.end();
   } catch(e) {
     console.dir(e);
     res.json(e);
@@ -272,5 +281,5 @@ app.get('/trans/:accId/:year*?', async (req: express.Request, res: express.Respo
 
 app.listen(3000,  () => {
   console.log('Listening on http://localhost:3000/');
-  opn('http://localhost:3000/auth/');
+  opn('http://localhost:3000/');
 });
