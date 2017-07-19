@@ -1,5 +1,14 @@
 <!DOCTYPE html>
 <html>
+<head>
+<meta charset="utf-8"/>
+<style>
+table {
+    text-align: left;
+    padding: 8px;
+}
+</style>
+</head>
 <body>
 
 <i>English follows Dutch</i>
