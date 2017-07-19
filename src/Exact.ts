@@ -68,7 +68,7 @@ export default class Exact {
       //console.dir(reply);
       //console.dir(reply.data.d);
 
-      // For some reason certain querys (with $top=1) dont containt the reults field
+      // For some reason certain queries (with $top=1) does not contain the results field
       if('results' in reply.data.d) {
         return reply.data.d.results;
       } else {
