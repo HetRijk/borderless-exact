@@ -116,13 +116,13 @@ app.get('/users', async (req: express.Request , res: express.Response) => {
 
     //let contacts = await e.listContacts();
     let contacts = await e.query('crm/Accounts', {
-      $select: 'ID,Code,Name',
+      $select: 'ID,Code,Name,Email',
       $orderby: 'Code',
       $filter: 'IsSales eq true and IsSupplier eq true',
     });
     //contacts = contacts.filter(x => x.IsSales && x.IsSupplier);
 
-    let names = contacts.map(x => '<a href="/trans/' + x.ID + '">' + x.Code + ' - ' + x.Name + '</a>');
+    let names = contacts.map(x => x.Code + ' - ' + '<a href="/trans/' + x.ID + '">' + x.Name + '</a> (' + x.Email + ')');
     res.write('Debiteuren/Crediteuren:<br>');
     res.write(names.join('<br>\n'));
 
