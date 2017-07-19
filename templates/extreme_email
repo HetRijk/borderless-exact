@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table {
+    text-align: left;
+    padding: 8px;
+}
+</style>
+</head>
+<body>
+
+Beste {{name}},</br></br>
+
+Bij de incasso zit je deze maand qua kosten boven de 100€ waardoor ik niet bij je kan incasseren. Kun je daarom het opstaande bedrag van {{amount}}€ overmaken naar NL83RABO0122893875 ten name van AEGEE-Delft met als beschrijving 'Incasso januari'?</br></br>
+
+Een overzicht met de kosten die je hebt gemaakt kan je onderaan deze mail vinden.</br></br>
+
+Als dit bedrag te groot is om in één keer te betalen, kunnen we een betalingsregeling afspreken.</br>
+Als er verder problemen zijn, hoor ik dit ook graag.</br></br>
+
+Met vriendelijke groet,</br></br>
+
+Rijk Hogenbirk<br>
+<i>Treasurer & Fundraising Responsible AEGEE-Delft<br>
+XXXIVth Board 'Perplex'</i></br></br>
+
+<table>
+  <tr>
+    <td><b>Tel:</b></td>
+    <td></td>
+    <td>+31646064384</td>
+  </tr>
+  <tr>
+    <td><b>Email:</b></td>
+    <td></td>
+    <td>treasurer@aegee-delft.nl</td>
+  </tr>
+  <tr>
+    <td><b>Adres:</b></td>
+    <td></td>
+    <td>Leeghwaterstraat 42</br></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td></td>
+    <td>2628 CA Delft</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+    <td>Nederland</td>
+  </tr>
+</table>
+
+</body>
+</html>
