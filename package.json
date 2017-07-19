@@ -26,6 +26,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.15.2",
+    "nodemailer": "^4.0.1",
     "opn": "^5.1.0",
     "passport": "^0.3.2",
     "passport-oauth2": "^1.4.0",
