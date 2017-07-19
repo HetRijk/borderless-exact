@@ -10,9 +10,9 @@ table {
 </head>
 <body>
 
-Beste NAAM,</br></br>
+Beste {{name}},</br></br>
 
-Bij de incasso zit je deze maand qua kosten boven de 100€ waardoor ik niet bij je kan incasseren. Kun je daarom het opstaande bedrag van BEDRAG€ overmaken naar NL83RABO0122893875 ten name van AEGEE-Delft met als beschrijving 'Incasso januari'?</br></br>
+Bij de incasso zit je deze maand qua kosten boven de 100€ waardoor ik niet bij je kan incasseren. Kun je daarom het opstaande bedrag van {{amount}}€ overmaken naar NL83RABO0122893875 ten name van AEGEE-Delft met als beschrijving 'Incasso januari'?</br></br>
 
 Een overzicht met de kosten die je hebt gemaakt kan je onderaan deze mail vinden.</br></br>
 
