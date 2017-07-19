@@ -7,54 +7,74 @@ import * as OAuth2Strategy from 'passport-oauth2';
 import * as express from 'express';
 import * as opn from 'opn';
 import * as nodemailer from 'nodemailer';
+// import * as multer from 'multer';
+import * as bodyParser from 'body-parser';
 
 // Homebrew
 import TokenWrapper from '../utils/TokenWrapper';
 import AuthBootstrap from '../utils/auth-bootstrap';
 import Exact from './Exact';
+import MailSettings from './MailSettings';
 
 // Constants
 const app = express();
+app.use(express.static('public'));
+//const upload = multer();
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
+// Globals
+let e : Exact;
+let mailSettings : MailSettings;
+
+//app.use( bodyParser.json() );       // to support JSON-encoded bodies
+//app.use(express.bodyParser());
+
+// app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
+//   extended: true
+// }));
 
 const injector = new AuthBootstrap();
 const tokenWrapper = injector.getTokenWrapper();
 injector.hookServer(app, '/auth', (req: express.Request , res: express.Response) => {
   res.send(JSON.stringify({ message: 'auth complete' }) +
            '<a href="/verify">verify</a> \
+           <a href="/mail-form.html">mail-form</a> \
+           <a href="/send-mail">send-mail</a> \
+<a href="/test">test</a>');
+});
+
+app.get('/', (req: express.Request , res: express.Response) => {
+  res.send(JSON.stringify({ message: 'auth complete' }) +
+           '<a href="/verify">verify</a> \
+<a href="/mail-form.html">mail-form</a> \
+<a href="/send-mail">send-mail</a> \
 <a href="/test">test</a>');
 });
 
 
-
-// create reusable transporter object using the default SMTP transport
-let mailTransporter = nodemailer.createTransport({
-    service: "Gmail",
-    auth: {
-      XOAuth2: {
-        user: 'aegee.delft@gmail.com',
-        clientId: "your_client_id",
-        clientSecret: "your_client_secret",
-        refreshToken: "your_refresh_token"
-      }
-    }
+app.post('/save-settings', (req: express.Request, res: express.Response) => {
+  let {server, email, password} = req.body;
+  mailSettings = new MailSettings( server, email, password); // TODO(@jlicht): filthy global
+  res.redirect('/');
 });
 
-app.get('/mail', async (req: express.Request, res: express.Response) => {
+app.get('/send-mail', async (req: express.Request, res: express.Response) => {
   try {
-      let mailOptions = {
-        from: '"Treasurer AEGEE-Delft" <treasurer@aegee-delft>',
-        to: '"Je Moeder" <tjeerdvanaalst@gmail.com>',
-        subject: 'Test mailsysteem',
-        text: 'message - test',
-        html: 'html <b> test </b>',
-      };
+    if(!mailSettings) {
+      throw new Error("Invalid State Error: mailsettings have not been setup.");
+    }
+    let mailOptions = {
+      from: '"Treasurer-auto AEGEE-Delft" <invoice@aegee-delft.nl>',
+      to: '"Jelle Test" <jlicht@posteo.net>',
+      subject: 'Test mailsysteem',
+      text: 'message - test',
+      html: 'html <b> test </b>',
+    };
 
-      let info = await mailTransporter.sendMail(mailOptions);
-      console.log('Message %s sent: %s', info.messageId, info.response);
-
-
-      res.json({});
+    let info = await mailSettings.getTransporter().sendMail(mailOptions);
+    console.log('Message %s sent: %s', info.messageId, info.response);
+    res.json({});
   } catch(e) {
     res.json(e);
     console.dir(e);
@@ -62,7 +82,6 @@ app.get('/mail', async (req: express.Request, res: express.Response) => {
 });
 
 
-var e;
 
 app.get('/verify',
         (req: express.Request , res: express.Response) => {
