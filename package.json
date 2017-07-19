@@ -1,7 +1,7 @@
 {
   "name": "borderless-exact",
   "version": "0.0.1",
-  "description": "Tickle me",
+  "description": "Tickle Rijk",
   "main": "dist/main/index.js",
   "typings": "dist/main/index",
   "engines": {
@@ -10,7 +10,7 @@
   "scripts": {
     "pretest": "tsc",
     "checkstyle": "tslint -c tslint.json 'src/**/*.ts' -t stylish",
-    "prestart": "tsc",
+    "prestart": "npm run build",
     "test": "mocha --colors --recursive --require source-map-support/register dist/test",
     "build": "tsc",
     "start": "node dist/main/index.js"
@@ -44,7 +44,7 @@
     "@types/mocha": "^2.2.37",
     "@types/multer": "^1.3.2",
     "@types/mustache": "^0.8.29",
-    "@types/node": "^7.0.0",
+    "@types/node": "^7.0.38",
     "@types/nodemailer": "^3.1.0",
     "@types/opn": "^3.0.28",
     "@types/passport": "^0.3.3",

@@ -11,6 +11,7 @@ import * as nodemailer from 'nodemailer';
 import * as bodyParser from 'body-parser';
 import * as mustache from 'mustache';
 import * as readFile from 'fs-readfile-promise';
+import * as fs from 'fs';
 
 // Homebrew
 import TokenWrapper from '../utils/TokenWrapper';
@@ -81,18 +82,22 @@ app.post('/save-settings', (req: express.Request, res: express.Response) => {
   res.redirect('/');
 });
 
+function readTemplate(filename: string): string {
+  return fs.readFileSync( __dirname + '/../../templates/' + filename,'utf8');
+}
+
 app.get('/send-mail', async (req: express.Request, res: express.Response) => {
   try {
     if(!mailSettings) {
       throw new Error("Invalid State Error: mailsettings have not been setup.");
     }
-
+    let html = mustache.to_html(readTemplate('standard_email'), {name: "Piet Paulusma"});
     let mailOptions = {
       from: '"Treasurer-auto AEGEE-Delft" <invoice@aegee-delft.nl>',
       to: '"Jelle Test" <jlicht@posteo.net>',
       subject: 'Test mailsysteem',
       text: 'message - test',
-      html: 'html <b> test </b>',
+      html: html
     };
 
     let info = await mailSettings.getTransporter().sendMail(mailOptions);
