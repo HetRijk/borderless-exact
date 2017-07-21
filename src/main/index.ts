@@ -9,6 +9,8 @@ import * as opn from 'opn';
 import * as nodemailer from 'nodemailer';
 // import * as multer from 'multer';
 import * as bodyParser from 'body-parser';
+import * as mustache from 'mustache';
+import * as readFile from 'fs-readfile-promise';
 
 // Homebrew
 import TokenWrapper from '../utils/TokenWrapper';
@@ -56,10 +58,16 @@ app.get('/', async (req: express.Request , res: express.Response) => {
 
     res.type('html');
     res.write('Logged in as ' + await e.getMyName() + '.<br><br>\n');
-    res.write('<a href="/verify">Verify</a><br>\n');
-    res.write('<a href="/users">List users</a><br>\n');
+    res.write('<a href="/verify">Verify Exact authentication</a><br>\n');
+    res.write('<a href="/accounts">List debitor/creditor accounts</a><br>\n');
     res.write('<a href="/mail-form.html">Enter mail settings</a><br>\n');
     res.write('<a href="/send-mail">Send test email</a><br>\n');
+    res.write('<a href="/accbal">List account balances (limited)</a><br>\n');
+    res.write('<a href="/incasso-script">Incasso script (limited)</a><br>\n');
+    res.write('<a href="/trans/e8acbe7f-ceb0-42a7-8d5d-9e921e281c56">Example transactions</a><br>\n');
+    res.write('<a href="/preview-mail/e8acbe7f-ceb0-42a7-8d5d-9e921e281c56">Example mail</a><br>\n');
+
+
     res.end();
   } catch(e) {
     res.json(e);
@@ -77,6 +85,7 @@ app.get('/send-mail', async (req: express.Request, res: express.Response) => {
     if(!mailSettings) {
       throw new Error("Invalid State Error: mailsettings have not been setup.");
     }
+
     let mailOptions = {
       from: '"Treasurer-auto AEGEE-Delft" <invoice@aegee-delft.nl>',
       to: '"Jelle Test" <jlicht@posteo.net>',
@@ -87,6 +96,9 @@ app.get('/send-mail', async (req: express.Request, res: express.Response) => {
 
     let info = await mailSettings.getTransporter().sendMail(mailOptions);
     console.log('Message %s sent: %s', info.messageId, info.response);
+
+
+
     res.json({});
   } catch(e) {
     res.json(e);
@@ -94,65 +106,202 @@ app.get('/send-mail', async (req: express.Request, res: express.Response) => {
   }
 });
 
+let roundMoney = (b) => {
+  return Math.round(b * 100) / 100;
+}
+
+let formatBalance = (b) : string => {
+  b = roundMoney(b);
+  if (b < 0)
+    return '<span style="color: red">' + b.toFixed(2) + '</span>';
+  else
+    return '<span style="color: green">' + b.toFixed(2) + '</span>';
+}
 
 
-app.get('/verify',
-        (req: express.Request , res: express.Response) => {
-          // Successful authentication, redirect home.
-          const tokenLogger = (err: any, token: string) => {
-            res.setHeader('Content-Type', 'application/json');
-            res.send(JSON.stringify({
-              error: err,
-              token,
-            }));
-          };
-          tokenWrapper.getToken(tokenLogger);
-        });
 
-app.get('/users', async (req: express.Request , res: express.Response) => {
+app.get('/verify', async (req: express.Request , res: express.Response) => {
   try {
-    res.type('html');
-    res.write('Listing all users...<br>\n');
-
-    let contacts = await e.getDebtors();
-    let names = contacts.map(x => x.Code + ' - ' + '<a href="/trans/' + x.ID + '">' + x.Name + '</a> (' + x.Email + ')');
-
-    res.write('Debiteuren/Crediteuren:<br>');
-    res.write(names.join('<br>\n'));
-    res.end();
+    res.json(await tokenWrapper.getTokenPromise());
   } catch(e) {
     res.json(e);
   }
 });
 
-app.get('/user/:accId', async (req: express.Request, res: express.Response) => {
+app.get('/accounts', async (req: express.Request , res: express.Response) => {
+  res.type('html');
   try {
-    let contact = await e.query('crm/Accounts', {
-      $filter: "ID eq guid'" + req.params.accId + "'",
-      $top: '1',
-    });
+    res.write('Listing all debitor/creditor accounts...<br>\n');
+
+    let contacts = await e.getDebtors();
+    let names = contacts.map(x =>
+      x.Code + ' - ' + '<a href="/trans/' + x.ID + '">' + x.Name + '</a> (' + x.Email + ')' + ' <a href="/account/' + x.ID + '">Details</a>' );
+
+    res.write('Debiteuren/Crediteuren:<br>');
+    res.write(names.join('<br>\n'));
+  } catch(e) {
+    res.write('ERROR: ' + JSON.stringify(e));
+  }
+  res.end();
+});
+
+app.get('/account/:accId', async (req: express.Request, res: express.Response) => {
+  try {
+    let contact = await e.getAccount(req.params.accId);
     res.json(contact);
   } catch(e) {
     res.json(e);
   }
 });
 
-// Convert a Microsoft AJAX date string (from the Exact API) to a human readable format
-// e.g. "Date(012345687)" to "2017-05-26"
-let fixDate = (d) => {
-  var date = new Date(parseInt(d.substr(6)));
-  return date.toISOString().substring(0, 10);
-}
+app.get('/accbal', async (req: express.Request, res: express.Response) => {
+  res.type('html');
+  res.charset = 'utf-8';
+  try {
+    res.write('Retreiving account list...<br>\n');
+    let accounts = await e.getDebtors();
+    res.write('Computing balances... <br><br>\n');
 
-let formatMoney = (n) => {
-  let s = n < 0 ? "-" : "+";
-  let str = Math.abs(n).toFixed(2);
-  return '€ ' + s + "&nbsp;&nbsp;&nbsp;&nbsp;".substring(0, 6*(6 - str.length)) + str;
-};
+    accounts = accounts.reverse();
+    for (let i = 0; i < 20; i++) {
+      let account = accounts[i];
+      let balance = await e.getAccountBalance(account.ID);
+      let x = account;
+      res.write(x.Code + ' - ' + '<a href="/trans/' + x.ID + '">' + x.Name + '</a> ' + formatBalance(balance));
+      res.write('<br>\n');
+    }
+
+    res.write('<br><br>Done.');
+  } catch(e) {
+    res.write('ERROR: ' + JSON.stringify(e));
+  }
+  res.end();
+});
+
+app.get('/verify', async (req: express.Request , res: express.Response) => {
+  try {
+    res.json(await tokenWrapper.getTokenPromise());
+  } catch(e) {
+    res.json(e);
+  }
+});
+
+app.get('/incasso-script', async (req: express.Request, res: express.Response) => {
+  res.type('html');
+  res.charset = 'utf-8';
+  try {
+    res.write('Retreiving account list...<br>\n');
+    let accounts = await e.getDebtors();
+    res.write('Processing accounts... <br><br>\n');
+
+    let incassos = <any>[];
+    let excassos = <any>[];
+    let thugs = <any>[];
+    let threshold = -100;
+
+    accounts = accounts.reverse();
+    for (let i = 0; i < 50; i++) {
+      let account = accounts[i];
+      let balance = await e.getAccountBalance(account.ID);
+
+      let x = account;
+      res.write(x.Code + ' - ' + '<a href="/trans/' + x.ID + '">' + x.Name + '</a> ' + formatBalance(balance));
+
+      if (balance != 0) {
+        if (account.Email == null) {
+          res.write(' -- NO EMAIL LISTED');
+        } else {
+          res.write(' -- Ready to send mail to ' + x.Email);
+        }
+
+        if (balance > 0) {
+          res.write(' - excasso ');
+          excassos.push({account: account, amount: balance});
+        } else {
+          if (balance < threshold) {
+            res.write(' - thug');
+            thugs.push({account: account, amount: -balance});
+          } else {
+            res.write(' - incasso');
+            incassos.push({account: account, amount: -balance});
+          }
+        }
+      }
+
+      res.write('<br>\n');
+    }
+
+    res.write('<br><br>Done.<br><br>');
+
+
+    let sortfun = (a,b) => b.amount - a.amount; // descending
+    excassos.sort(sortfun);
+    incassos.sort(sortfun);
+    thugs.sort(sortfun);
+
+    res.write('Excassos: <br>');
+    res.write(excassos.map(x => x.account.Name + '\t' + x.amount.toFixed(2)).join('<br>\n'));
+    res.write('<br><br>');
+
+    res.write('Incassos: <br>');
+    res.write(incassos.map(x => x.account.Name + '\t' + x.amount.toFixed(2)).join('<br>\n'));
+    res.write('<br><br>');
+
+    res.write('Boeven: <br>');
+    res.write(thugs.map(x => x.account.Name + '\t' + x.amount.toFixed(2)).join('<br>\n'));
+    res.write('<br><br>');
+
+
+
+  } catch(e) {
+    res.write('ERROR: ' + JSON.stringify(e));
+  }
+  res.end();
+});
+
+
+
+let formatTransactionList = (trans) : string => {
+  let formatMoney = (n) => {
+    let s = n < 0 ? "-" : "+";
+    let str = Math.abs(n).toFixed(2);
+    return '€ ' + s + "&nbsp;&nbsp;&nbsp;&nbsp;".substring(0, 6*(6 - str.length)) + str;
+  };
+
+  // Convert a Microsoft AJAX date string (from the Exact API) to a human readable format
+  // e.g. "/Date(012345687)/" to "2017-05-26"
+  let fixDate = (d) => {
+    var date = new Date(parseInt(d.substr(6)));
+    return date.toISOString().substring(0, 10);
+  }
+
+
+  let tlist = trans.tList
+    .map(x => x.FinancialYear + '.' + x.FinancialPeriod + ' | ' + fixDate(x.Date)
+         + " | <kbd>" + formatMoney(-x.AmountDC) + '</kbd> | ' + x.Description);
+
+  tlist = tlist.join('<br>\n');
+  tlist = tlist + '<br><br>';
+
+  let transSum = trans.map(x => -x.AmountDC).reduce((a,b)=>a+b, 0);
+
+  tlist = tlist + 'Start balance: ' + formatMoney(trans.balance - transSum) + '<br>';
+  tlist = tlist + 'Year balance: ' + formatMoney(transSum) + '<br>';
+  tlist = tlist + 'End balance: ' + formatMoney(trans.balance);
+
+  return tlist;
+}
 
 
 // Turn an array of transactions into an HTML formatted table
-let makeTransactionTable = (trans, endSaldo) : string => {
+let formatTransactionTable = (trans) : string => {
+  // Convert a Microsoft AJAX date string (from the Exact API) to a human readable format
+  // e.g. "/Date(012345687)/" to "2017-05-26"
+  let fixDate = (d) => {
+    var date = new Date(parseInt(d.substr(6)));
+    return date.toISOString().substring(0, 10);
+  }
+
   let tblStr = '<table style="border-spacing: 7pt 0pt">\n';
 
   tblStr = tblStr + "<tr>"
@@ -163,7 +312,7 @@ let makeTransactionTable = (trans, endSaldo) : string => {
     + '<th style="text-align: right">' + "In (€)</th>"
     + "</tr>\n";
 
-  let rows = trans.map(x => "<tr>"
+  let rows = trans.tList.map(x => "<tr>"
                        + "<td>" + x.FinancialYear + '.' + x.FinancialPeriod + "</td>"
                        + "<td>" + fixDate(x.Date) + "</td>"
                        + "<td>" + x.Description + "</td>"
@@ -173,9 +322,11 @@ let makeTransactionTable = (trans, endSaldo) : string => {
 
   tblStr = tblStr + rows.join('');
 
-  let outSum = trans.map(x => (-x.AmountDC < 0) ? -x.AmountDC : 0).reduce((a,b)=>a+b, 0);
-  let inSum = trans.map(x => (-x.AmountDC > 0) ? -x.AmountDC : 0).reduce((a,b)=>a+b, 0);
-  let saldo = inSum + outSum;
+  let outSum = trans.tList.map(x => (-x.AmountDC < 0) ? -x.AmountDC : 0).reduce((a,b)=>a+b, 0);
+  let inSum = trans.tList.map(x => (-x.AmountDC > 0) ? -x.AmountDC : 0).reduce((a,b)=>a+b, 0);
+  let netSum = inSum + outSum;
+  let startBalance = trans.balance - netSum;
+  let balance = trans.balance;
 
   tblStr = tblStr + "<tr><td>&nbsp;</td></tr>\n";
 
@@ -189,27 +340,25 @@ let makeTransactionTable = (trans, endSaldo) : string => {
 
   tblStr = tblStr + "<tr><td>&nbsp;</td></tr>\n";
 
-  let startSaldo = 0;
-  if(endSaldo) {
-    startSaldo = endSaldo - saldo;
-  }
-
-  let posnul = (d) => (d > 0 || d.toFixed(2) == "0.00" || d.toFixed(2) == "-0.00");
+  // Needed to avoid "-0.00"
+  // !! Use only after calculations are done since precision is lost
+  startBalance = Math.round(startBalance * 100) / 100;
+  balance = Math.round(balance * 100) / 100;
 
   tblStr = tblStr + "<tr>"
     + "<td>" + "</td>"
     + "<td>" + "</td>"
     + '<th style="text-align: left">' + "Beginsaldo:" + "</th>"
-    + '<td style="color: red; text-align: right">' + ((startSaldo < 0) ? startSaldo.toFixed(2) : "") + "</td>"
-    + '<td style="color: green; text-align: right">' + (posnul(startSaldo) ? startSaldo.toFixed(2) : "") + "</td>"
+    + '<td style="color: red; text-align: right">' + ((startBalance < 0) ? startBalance.toFixed(2) : "") + "</td>"
+    + '<td style="color: green; text-align: right">' + (startBalance >= 0 ? startBalance.toFixed(2) : "") + "</td>"
     + "</tr>\n";
 
   tblStr = tblStr + "<tr>"
     + "<td>" + "</td>"
     + "<td>" + "</td>"
     + '<th style="text-align: left">' + "Saldo:" + "</th>"
-    + '<td style="color: red; text-align: right">' + ((saldo < 0) ? saldo.toFixed(2) : "") + "</td>"
-    + '<td style="color: green; text-align: right">' + (posnul(saldo) ? saldo.toFixed(2) : "") + "</td>"
+    + '<td style="color: red; text-align: right">' + ((balance < 0) ? balance.toFixed(2) : "") + "</td>"
+    + '<td style="color: green; text-align: right">' + (balance >= 0 ? balance.toFixed(2) : "") + "</td>"
     + "</tr>\n";
 
   tblStr = tblStr + "</table>\n";
@@ -218,50 +367,68 @@ let makeTransactionTable = (trans, endSaldo) : string => {
 }
 
 app.get('/trans/:accId/:year*?', async (req: express.Request, res: express.Response) => {
+  res.type('html');
+  res.charset = 'utf-8';
   try {
-    res.type('html');
-    res.charset = 'utf-8';
+    let account = await e.getAccount(req.params.accId);
+    res.write('Listing transaction lines for ' + account.Name + ':<br><br>\n');
 
-    let contact = await e.getAccount(req.params.accId);
-    res.write('Listing transaction lines for ' + contact.Name + ':<br><br>\n');
+    let trans = await e.getTransactionsObj(req.params.accId);
 
-    let trans = await e.getTransactions(req.params.accId);
-
-    let years = [...new Set(trans.map(x => x.FinancialYear))];
+    let years = [...new Set(trans.tList.map(x => x.FinancialYear))];
     res.write(years.map(x => '<a href="/trans/' + req.params.accId + '/' + x + '">' + x + '</a> ').join(' '));
     res.write('<br><br>');
 
-    // Compute saldo as the sum of all transaction amounts
-    let saldo = trans.map(x => -x.AmountDC).reduce((a,b)=>a+b, 0);
-
-    let yearSaldo = 0;
     if('year' in req.params && req.params.year) {
-      trans = trans.filter(x => x.FinancialYear == req.params.year);
-      yearSaldo = trans.map(x => -x.AmountDC).reduce((a,b)=>a+b, 0);
+      trans.tList = trans.tList.filter(x => x.FinancialYear == req.params.year);
     }
-    let startSaldo = saldo - yearSaldo;
 
-    let tlist = trans
-      .map(x => x.FinancialYear + '.' + x.FinancialPeriod + ' | ' + fixDate(x.Date)
-           + " | <kbd>" + formatMoney(-x.AmountDC) + '</kbd> | ' + x.Description);
+    res.write(formatTransactionTable(trans));
 
-    //console.dir(contacts);
-    res.write(tlist.join('<br>\n'));
-    res.write('<br><br>');
-    res.write(makeTransactionTable(trans, saldo));
-    res.write('<br><br>');
-
-    res.write('Start saldo: ' + formatMoney(startSaldo) + '<br>');
-    res.write('Year saldo: ' + formatMoney(yearSaldo) + '<br>');
-    res.write('End saldo: ' + formatMoney(saldo));
-    res.end();
+    res.write('<br><br><a href="/preview-mail/' + account.ID + '">Preview Email</a>');
   } catch(e) {
-    console.dir(e);
-    res.json(e);
+    res.write('ERROR: ' + JSON.stringify(e));
   }
+  res.end();
 });
 
+let makeIncassoMail = async (account, trans) => {
+  let variables = {
+    name: account.Name,
+    amount: Math.abs(trans.balance).toFixed(2),
+    balance: trans.balance.toFixed(2),
+    balanceColored: formatBalance(trans.balance),
+    transactions: formatTransactionTable(trans),
+  };
 
+  let template = (await readFile('templates/standard_email')).toString();
+  if (trans.balance <= -100)
+    template = (await readFile('templates/extreme_email')).toString();
+  let body = mustache.render(template, variables);
+
+  let mailOptions = {
+    from: '"Treasurer-auto AEGEE-Delft" <invoice@aegee-delft.nl>',
+    to: '"' + account.Name + '" <' + account.Email + '>',
+    subject: 'Incasso',
+    text: 'Please view HTML body',
+    html: body,
+  };
+
+  return mailOptions;
+}
+
+app.get('/preview-mail/:accId/', async (req: express.Request, res: express.Response) => {
+  res.type('html');
+  res.charset = 'utf-8';
+  try {
+    let account = await e.getAccount(req.params.accId);
+    let trans = await e.getTransactionsObj(req.params.accId, '2016'); // TODO proper filtering
+    res.write((await makeIncassoMail(account, trans)).html);
+  } catch(e) {
+    res.write('ERROR: ' + JSON.stringify(e));
+  }
+  res.end();
+});
 
 app.listen(3000,  () => {
   console.log('Listening on http://localhost:3000/');

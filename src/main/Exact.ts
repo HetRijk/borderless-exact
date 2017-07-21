@@ -52,9 +52,12 @@ export default class Exact {
         });
 
       // Todo: add some mechanism to stop
-      // Eg: yielding / Stream
+      // Eg: yielding function / Stream
+      // NB: Exact API has 60 records per page
+      //     except for 'bulk' tables, where it supports 1000 records per page
       while('__next' in reply.data.d) {
-        console.log('Loading next batch of results...');
+        console.log('Got ' + reply.data.d.results.length + ' records of "' + what + '", fetching next page...');
+
         let nexturl = reply.data.d.__next;
         let results = reply.data.d.results;
         reply = await restler.get(nexturl, {
@@ -64,16 +67,18 @@ export default class Exact {
         reply.data.d.results = results.concat(reply.data.d.results);
       }
 
-      console.log('Successful query for "' + what + '"');
+
       //console.dir(reply);
       //console.dir(reply.data.d);
 
       // For some reason certain queries (with $top=1) does not contain the results field
-      if('results' in reply.data.d) {
-        return reply.data.d.results;
-      } else {
-        return reply.data.d;
-      }
+      let ret = reply.data.d;
+      if('results' in reply.data.d)
+        ret = reply.data.d.results;
+
+      console.log('Successful query for "' + what + '" (' + ret.length + ' records)');
+
+      return ret;
 
     } catch(e) {
       console.log('Error while querying "' + what + '"');
@@ -116,6 +121,10 @@ export default class Exact {
 
 
   // AEGEE Exact stuff
+  // Lijstje objecten in Exact DB:
+  // https://start.exactonline.nl/docs/HlpRestAPIResources.aspx?SourceAction=10
+  // ===============================================================
+
   public async getAccount(id) {
     let contact = await this.query('crm/Accounts', {
       $filter: "ID eq guid'" + id + "'",
@@ -134,21 +143,48 @@ export default class Exact {
 
   // Get transactions for specified account
   //
-  public async getTransactions(accountID) {
+  public async getTransactionList(accountID) {
+    // Bulk (bulk/Financial/TransactionLines) does not seem to support filtering...
     return this.query('financialtransaction/TransactionLines', {
       $select: 'Description,AmountDC,Date,FinancialYear,FinancialPeriod',
       $filter: "Account eq guid'" + accountID + "'" +
         " and (GLAccountCode eq trim('1400') or GLAccountCode eq trim('1500'))", // Debiteuren of Crediteuren grootboeken
-        $orderby: 'Date',
+      $orderby: 'Date',
+    });
+  }
+
+  public async getTransactionsObj(accountID, year = '*') {
+    let tList = await this.getTransactionList(accountID);
+    let balance = tList.map(x => -x.AmountDC).reduce((a,b)=>a+b, 0);
+
+    let roundMoney = (b) => {
+      return Math.round(b * 100) / 100;
+    }
+
+    balance = roundMoney(balance);
+
+    if (year != '*')
+      tList = tList.filter(x => x.FinancialYear == year);
+
+    return {tList: tList, balance: balance};
+  }
+
+  // Warning: slow
+  public async getAccountBalance(accountID) {
+    return (await this.getTransactionsObj(accountID)).balance;
+  }
+
+  // Sum transactions for specified account
+  // NOT WORKING
+  // Exact does not seem to support the $apply syntax
+  public async getAccountBalanceXXX(accountID) {
+    return this.query('financialtransaction/TransactionLines', {
+      $select: 'AmountDC',
+      $filter: "Account eq guid'" + accountID + "'" +
+        " and (GLAccountCode eq trim('1400') or GLAccountCode eq trim('1500'))", // Debiteuren of Crediteuren grootboeken
+      $apply: 'aggregate(AmountDC with sum as Total',
     });
   }
 
 
 }
-
-// Todo:
-// - Promises & error handling
-// - Store cur_div properly and start querying interesting things
-
-// Lijstje objecten in Exact DB:
-// https://start.exactonline.nl/docs/HlpRestAPIResources.aspx?SourceAction=10

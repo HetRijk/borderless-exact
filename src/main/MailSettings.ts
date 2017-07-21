@@ -25,10 +25,3 @@ export default class MailSettings {
     });
   }
 }
-
-// Todo:
-// - Promises & error handling
-// - Store cur_div properly and start querying interesting things
-
-// Lijstje objecten in Exact DB:
-// https://start.exactonline.nl/docs/HlpRestAPIResources.aspx?SourceAction=10
