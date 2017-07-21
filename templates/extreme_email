@@ -2,13 +2,17 @@
 <html>
 <body>
 
+<i>English follows Dutch</i>
+
+<hr>
+
 Beste {{name}},</br></br>
 
-Bij de incasso zit je deze maand qua kosten boven de €100 waardoor ik niet bij je kan incasseren. Kun je daarom het opstaande bedrag van <span style="color: red;">€{{amount}}</span> overmaken naar NL83RABO0122893875 ten name van AEGEE-Delft met als beschrijving 'Incasso januari'?</br></br>
+Bij de incasso zit je deze maand qua kosten boven de €100 waardoor ik niet bij je kan incasseren. <br>
+Kun je daarom het opstaande bedrag van <span style="color: red;">€{{amount}}</span> overmaken naar NL83RABO0122893875 ten name van AEGEE-Delft met als beschrijving 'Openstaande kosten {{month}}'?<br><br>
 
 Een overzicht met de kosten die je hebt gemaakt kan je onderaan deze mail vinden.</br></br>
 
-Als dit bedrag te groot is om in één keer te betalen, kunnen we een betalingsregeling afspreken.</br>
 Als er verder problemen zijn, hoor ik dit ook graag.</br></br>
 
 Met vriendelijke groet,</br></br>
@@ -44,6 +48,51 @@ XXXIVth Board 'Perplex'</i></br></br>
     <td>Nederland</td>
   </tr>
 </table>
+
+<hr>
+
+Dear {{name}}, <br><br>
+
+This month your outstanding debt with AEGEE-Delft is more than 100€. This means that it cannot be collected with debt collection. Therefore, you must transfer this yourself. </br>
+Please transfer the amount of {{amount}} € within 14 days to NL83RABO0122893875 in the name of AEGEE-Delft with the description “Openstaande kosten {{month}}”. </br></br>
+
+An overview of the costs that lead to this amount can be found at the bottom of this email. <br><br>
+
+If you have any questions, please don’t hesitate to reply to this email. <br><br>
+
+Rijk Hogenbirk<br>
+<i>Treasurer & Fundraising Responsible AEGEE-Delft<br>
+XXXIVth Board 'Perplex'</i></br></br>
+
+<table style="text-align: left; padding: 8px;">
+  <tr>
+    <td><b>Tel:</b></td>
+    <td></td>
+    <td>+31646064384</td>
+  </tr>
+  <tr>
+    <td><b>Email:</b></td>
+    <td></td>
+    <td>treasurer@aegee-delft.nl</td>
+  </tr>
+  <tr>
+    <td><b>Address:</b></td>
+    <td></td>
+    <td>Leeghwaterstraat 42</br></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td></td>
+    <td>2628 CA Delft</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+    <td>Nederland</td>
+  </tr>
+</table>
+
+
 
 <br>
 <hr>
