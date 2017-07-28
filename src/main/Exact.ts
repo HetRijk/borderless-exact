@@ -126,11 +126,20 @@ export default class Exact {
   // ===============================================================
 
   public async getAccount(id) {
-    let contact = await this.query('crm/Accounts', {
-      $filter: "ID eq guid'" + id + "'",
+    return await this.query("crm/Accounts(guid'" + id + "')");
+  }
+
+  // Todo: implement __deferred handling for Account.BankAccounts ?
+  public async getAccountBankAccounts(accId) {
+    return await this.query("crm/Accounts(guid'" + accId + "')/BankAccounts");
+  }
+
+  public async getAccountMainBankAccount(accId) {
+    let bas = await this.query("crm/Accounts(guid'" + accId + "')/BankAccounts", {
+      $filter: 'Main eq true',
       $top: '1',
     });
-    return contact[0];
+    return bas[0];
   }
 
   public async getDebtors() {

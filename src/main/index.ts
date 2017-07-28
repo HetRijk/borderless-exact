@@ -62,8 +62,9 @@ app.get('/', async (req: express.Request , res: express.Response) => {
     res.write('<a href="/accounts">List debitor/creditor accounts</a><br>\n');
     res.write('<a href="/mail-form.html">Enter mail settings</a><br>\n');
     res.write('<a href="/send-mail">Send test email</a><br>\n');
-    res.write('<a href="/accbal">List account balances (limited)</a><br>\n');
-    res.write('<a href="/incasso-script">Incasso script (limited)</a><br>\n');
+    res.write('<a href="/accbal">List account balances</a><br>\n');
+    res.write('<br>');
+    res.write('<a href="/account/e8acbe7f-ceb0-42a7-8d5d-9e921e281c56">Example account details (JSON)</a><br>\n');
     res.write('<a href="/trans/e8acbe7f-ceb0-42a7-8d5d-9e921e281c56">Example transactions</a><br>\n');
     res.write('<a href="/preview-mail/e8acbe7f-ceb0-42a7-8d5d-9e921e281c56">Example mail</a><br>\n');
 
@@ -131,14 +132,17 @@ app.get('/verify', async (req: express.Request , res: express.Response) => {
 app.get('/accounts', async (req: express.Request , res: express.Response) => {
   res.type('html');
   try {
-    res.write('Listing all debitor/creditor accounts...<br>\n');
+    res.write('Listing all debitor/creditor accounts...<br><br>\n');
 
     let contacts = await e.getDebtors();
-    let names = contacts.map(x =>
-      x.Code + ' - ' + '<a href="/trans/' + x.ID + '">' + x.Name + '</a> (' + x.Email + ')' + ' <a href="/account/' + x.ID + '">Details</a>' );
-
-    res.write('Debiteuren/Crediteuren:<br>');
-    res.write(names.join('<br>\n'));
+    let template = `<table>{{#.}}<tr>
+      <td>{{Code}}</td>
+      <td><a href="/account/{{ID}}">{{Name}}</a></td>
+      <td>{{Email}}</td>
+      <td><a href="/trans/{{ID}}">Transactions</a></td>
+      </tr>{{/.}}</table>`;
+    let html = mustache.render(template, contacts);
+    res.write(html);
   } catch(e) {
     res.write('ERROR: ' + JSON.stringify(e));
   }
@@ -148,6 +152,8 @@ app.get('/accounts', async (req: express.Request , res: express.Response) => {
 app.get('/account/:accId', async (req: express.Request, res: express.Response) => {
   try {
     let contact = await e.getAccount(req.params.accId);
+    contact.BankAccounts = await e.getAccountBankAccounts(req.params.accId);
+    contact._trans = await e.getTransactionsObj(req.params.accId);
     res.json(contact);
   } catch(e) {
     res.json(e);
@@ -160,18 +166,63 @@ app.get('/accbal', async (req: express.Request, res: express.Response) => {
   try {
     res.write('Retreiving account list...<br>\n');
     let accounts = await e.getDebtors();
-    res.write('Computing balances... <br><br>\n');
+    res.write('OK, got ' + accounts.length + ' accounts. Fetching transactions and computing balances... <br><br>\n');
 
     accounts = accounts.reverse();
-    for (let i = 0; i < 20; i++) {
-      let account = accounts[i];
-      let balance = await e.getAccountBalance(account.ID);
-      let x = account;
-      res.write(x.Code + ' - ' + '<a href="/trans/' + x.ID + '">' + x.Name + '</a> ' + formatBalance(balance));
-      res.write('<br>\n');
+    for (let i = 0; i < accounts.length; i++) {
+      let t = await e.getTransactionsObj(accounts[i].ID);
+
+      accounts[i]._trans = t;
+      accounts[i].balance = t.balance;
+      accounts[i].balanceHTML = formatBalance(t.balance);
+
+      if (t.balance != 0) {
+        accounts[i].MainBankAccount = await e.getAccountMainBankAccount(accounts[i].ID);
+      }
+
+      // live balance -> make nice table !!
+      //let x = accounts[i];
+      //res.write(x.Code + ' - ' + '<a href="/trans/' + x.ID + '">' + x.Name + '</a> ' + formatBalance(x.balance));
+      //res.write('<br>\n');
+
+      if (i % 10 == 0)
+        res.write('.');
     }
 
-    res.write('<br><br>Done.');
+    res.write('<br><br>Done.<br><br>');
+
+    let template = `<table>{{#.}}<tr>
+      <td style="text-align: right;">{{Code}}</td>
+      <td><a href="/account/{{ID}}">{{Name}}</a></td>
+      <td>{{Email}}</td>
+      <td>{{MainBankAccount.IBAN}}</td>
+      <td style="text-align: right;">{{{balanceHTML}}}</td>
+      <td><a href="/trans/{{ID}}">Transactions</a></td>
+      </tr>{{/.}}</table>`;
+
+    let debcred = accounts.filter(x => x.balance != undefined && x.balance != 0);
+    res.write('Got ' + debcred.length + ' people with non-zero balance.');
+    res.write('<br><br>');
+
+    // Sort by name (ascending)
+    debcred = debcred.sort( (a,b) => {
+      if(a.Name < b.Name) return -1;
+      if(a.Name > b.Name) return 1;
+      return 0;
+    });
+
+    let creditors = debcred.filter(x => x.balance > 0);
+    res.write('Got ' + creditors.length + ' creditors: <br><br>');
+    res.write(mustache.render(template, creditors));
+    res.write('<br><br>');
+
+    let debitors = debcred.filter(x => x.balance < 0);
+    res.write('Got ' + debitors.length + ' debitors: <br><br>');
+    res.write(mustache.render(template, debitors));
+    res.write('<br><br>');
+
+
+
   } catch(e) {
     res.write('ERROR: ' + JSON.stringify(e));
   }
@@ -184,79 +235,6 @@ app.get('/verify', async (req: express.Request , res: express.Response) => {
   } catch(e) {
     res.json(e);
   }
-});
-
-app.get('/incasso-script', async (req: express.Request, res: express.Response) => {
-  res.type('html');
-  res.charset = 'utf-8';
-  try {
-    res.write('Retreiving account list...<br>\n');
-    let accounts = await e.getDebtors();
-    res.write('Processing accounts... <br><br>\n');
-
-    let incassos = <any>[];
-    let excassos = <any>[];
-    let thugs = <any>[];
-    let threshold = -100;
-
-    accounts = accounts.reverse();
-    for (let i = 0; i < 50; i++) {
-      let account = accounts[i];
-      let balance = await e.getAccountBalance(account.ID);
-
-      let x = account;
-      res.write(x.Code + ' - ' + '<a href="/trans/' + x.ID + '">' + x.Name + '</a> ' + formatBalance(balance));
-
-      if (balance != 0) {
-        if (account.Email == null) {
-          res.write(' -- NO EMAIL LISTED');
-        } else {
-          res.write(' -- Ready to send mail to ' + x.Email);
-        }
-
-        if (balance > 0) {
-          res.write(' - excasso ');
-          excassos.push({account: account, amount: balance});
-        } else {
-          if (balance < threshold) {
-            res.write(' - thug');
-            thugs.push({account: account, amount: -balance});
-          } else {
-            res.write(' - incasso');
-            incassos.push({account: account, amount: -balance});
-          }
-        }
-      }
-
-      res.write('<br>\n');
-    }
-
-    res.write('<br><br>Done.<br><br>');
-
-
-    let sortfun = (a,b) => b.amount - a.amount; // descending
-    excassos.sort(sortfun);
-    incassos.sort(sortfun);
-    thugs.sort(sortfun);
-
-    res.write('Excassos: <br>');
-    res.write(excassos.map(x => x.account.Name + '\t' + x.amount.toFixed(2)).join('<br>\n'));
-    res.write('<br><br>');
-
-    res.write('Incassos: <br>');
-    res.write(incassos.map(x => x.account.Name + '\t' + x.amount.toFixed(2)).join('<br>\n'));
-    res.write('<br><br>');
-
-    res.write('Boeven: <br>');
-    res.write(thugs.map(x => x.account.Name + '\t' + x.amount.toFixed(2)).join('<br>\n'));
-    res.write('<br><br>');
-
-
-
-  } catch(e) {
-    res.write('ERROR: ' + JSON.stringify(e));
-  }
-  res.end();
 });
 
 
