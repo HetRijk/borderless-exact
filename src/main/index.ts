@@ -30,6 +30,19 @@ let e: Exact;
 let mailSettings: MailSettings;
 let accounts: any; // list of accounts (cached)
 
+function readTemplate(filename: string): string {
+  return fs.readFileSync( __dirname + '/../../templates/' + filename, 'utf8');
+}
+
+const formatBalance = (b): string => {
+  b = Math.round(b * 100) / 100;
+  if (b < 0) {
+    return '<span style="color: red">' + b.toFixed(2) + '</span>';
+  } else {
+    return '<span style="color: green">' + b.toFixed(2) + '</span>';
+  }
+};
+
 const injector = new AuthBootstrap();
 const tokenWrapper = injector.getTokenWrapper();
 injector.hookServer(app, '/auth', async (req: express.Request , res: express.Response) => {
@@ -71,10 +84,6 @@ app.post('/save-settings', (req: express.Request, res: express.Response) => {
   res.redirect('/');
 });
 
-function readTemplate(filename: string): string {
-  return fs.readFileSync( __dirname + '/../../templates/' + filename, 'utf8');
-}
-
 app.get('/send-mail', async (req: express.Request, res: express.Response) => {
   try {
     if (!mailSettings) {
@@ -101,15 +110,6 @@ app.get('/send-mail', async (req: express.Request, res: express.Response) => {
     console.dir(e);
   }
 });
-
-const formatBalance = (b): string => {
-  b = Math.round(b * 100) / 100;
-  if (b < 0) {
-    return '<span style="color: red">' + b.toFixed(2) + '</span>';
-  } else {
-    return '<span style="color: green">' + b.toFixed(2) + '</span>';
-  }
-};
 
 app.get('/verify', async (req: express.Request , res: express.Response) => {
   try {
@@ -218,13 +218,7 @@ app.get('/accbal', async (req: express.Request, res: express.Response) => {
   res.end();
 });
 
-app.get('/verify', async (req: express.Request , res: express.Response) => {
-  try {
-    res.json(await tokenWrapper.getTokenPromise());
-  } catch (e) {
-    res.json(e);
-  }
-});
+
 
 // Turn an array of transactions into an HTML formatted table
 const formatTransactionTable = async (trans, lastYearOnly : boolean): Promise<string> => {
