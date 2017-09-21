@@ -107,6 +107,11 @@ export default class Exact {
     return me.FullName;
   }
 
+  public generateExactContactLink(accId) {
+    return 'https://start.exactonline.nl/docs/CRMAccountCard.aspx?_Division_=' + this._currentDivision +
+      '&AccountID=%7b' + accId + '%7d';
+  }
+
   // Example query: list contacts
   public async listContacts() {
      return await this.query('crm/Contacts');
