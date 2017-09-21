@@ -88,8 +88,8 @@ app.get('/send-mail', async (req: express.Request, res: express.Response) => {
       text: 'message - test',
       html,
       headers: {
-         'Reply-To': '"Treasurer AEGEE-Delft" <treasurer@aegee-delft.nl>'
-      }
+        'Reply-To': '"Treasurer AEGEE-Delft" <treasurer@aegee-delft.nl>',
+      },
     };
 
     const info = await mailSettings.getTransporter().sendMail(mailOptions);
