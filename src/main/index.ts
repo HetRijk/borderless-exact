@@ -29,6 +29,7 @@ app.use(bodyParser.json());
 // Globals
 let e : Exact;
 let mailSettings : MailSettings;
+let accounts : any; // list of accounts (cached)
 
 //app.use( bodyParser.json() );       // to support JSON-encoded bodies
 //app.use(express.bodyParser());
@@ -58,16 +59,14 @@ app.get('/', async (req: express.Request , res: express.Response) => {
     }
 
     res.type('html');
-    res.write('Logged in as ' + await e.getMyName() + '.<br><br>\n');
-    res.write('<a href="/verify">Verify Exact authentication</a><br>\n');
-    res.write('<a href="/accounts">List debitor/creditor accounts</a><br>\n');
+    res.write('Logged in as ' + await e.getMyName() + '.<br>\n');
+    res.write('<br>\n')
     res.write('<a href="/mail-form.html">Enter mail settings</a><br>\n');
     res.write('<a href="/send-mail">Send test email</a><br>\n');
+    res.write('<br>\n');
+    res.write('<a href="/accounts">List accounts</a><br>\n');
     res.write('<a href="/accbal">List account balances</a><br>\n');
-    res.write('<br>');
-    res.write('<a href="/account/e8acbe7f-ceb0-42a7-8d5d-9e921e281c56">Example account details (JSON)</a><br>\n');
-    res.write('<a href="/trans/e8acbe7f-ceb0-42a7-8d5d-9e921e281c56">Example transactions</a><br>\n');
-    res.write('<a href="/preview-mail/e8acbe7f-ceb0-42a7-8d5d-9e921e281c56">Example mail</a><br>\n');
+    res.write('<br>\n');
 
 
     res.end();
@@ -139,14 +138,16 @@ app.get('/accounts', async (req: express.Request , res: express.Response) => {
   try {
     res.write('Listing all debitor/creditor accounts...<br><br>\n');
 
-    let contacts = await e.getDebtors();
+    if(accounts == undefined) {
+      accounts = await e.getDebtors();
+    }
     let template = `<table>{{#.}}<tr>
       <td>{{Code}}</td>
       <td><a href="/account/{{ID}}">{{Name}}</a></td>
       <td>{{Email}}</td>
       <td><a href="/trans/{{ID}}">Transactions</a></td>
       </tr>{{/.}}</table>`;
-    let html = mustache.render(template, contacts);
+    let html = mustache.render(template, accounts);
     res.write(html);
   } catch(e) {
     res.write('ERROR: ' + JSON.stringify(e));
@@ -158,7 +159,7 @@ app.get('/account/:accId', async (req: express.Request, res: express.Response) =
   try {
     let contact = await e.getAccount(req.params.accId);
     contact.BankAccounts = await e.getAccountBankAccounts(req.params.accId);
-    contact._trans = await e.getTransactionsObj(req.params.accId);
+    contact.trans = await e.getTransactionsObj(req.params.accId);
     res.json(contact);
   } catch(e) {
     res.json(e);
@@ -170,26 +171,25 @@ app.get('/accbal', async (req: express.Request, res: express.Response) => {
   res.charset = 'utf-8';
   try {
     res.write('Retreiving account list...<br>\n');
-    let accounts = await e.getDebtors();
+    if(accounts == undefined) {
+      accounts = await e.getDebtors();
+    }
     res.write('OK, got ' + accounts.length + ' accounts. Fetching transactions and computing balances... <br><br>\n');
 
     accounts = accounts.reverse();
     for (let i = 0; i < accounts.length; i++) {
-      let t = await e.getTransactionsObj(accounts[i].ID);
 
-      accounts[i]._trans = t;
-      accounts[i].balance = t.balance;
-      accounts[i].balanceHTML = formatBalance(t.balance);
+      if(accounts[i].trans == undefined) {
+        accounts[i].trans = await e.getTransactionsObj(accounts[i].ID);;
+        accounts[i].balance = accounts[i].trans.balance;
+        accounts[i].balanceHTML = formatBalance(accounts[i].trans.balance);
 
-      if (t.balance != 0) {
-        accounts[i].MainBankAccount = await e.getAccountMainBankAccount(accounts[i].ID);
+        if (accounts[i].trans.balance !== 0) {
+          accounts[i].MainBankAccount = await e.getAccountMainBankAccount(accounts[i].ID);
+        }
       }
 
-      // live balance -> make nice table !!
-      //let x = accounts[i];
-      //res.write(x.Code + ' - ' + '<a href="/trans/' + x.ID + '">' + x.Name + '</a> ' + formatBalance(x.balance));
-      //res.write('<br>\n');
-
+      // Display progress indicator
       if (i % 10 == 0)
         res.write('.');
     }
@@ -203,6 +203,7 @@ app.get('/accbal', async (req: express.Request, res: express.Response) => {
       <td>{{MainBankAccount.IBAN}}</td>
       <td style="text-align: right;">{{{balanceHTML}}}</td>
       <td><a href="/trans/{{ID}}">Transactions</a></td>
+      <td><a href="/preview-mail/{{ID}}">Preview mail</a></td>
       </tr>{{/.}}</table>`;
 
     let debcred = accounts.filter(x => x.balance != undefined && x.balance != 0);
