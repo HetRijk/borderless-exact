@@ -102,12 +102,8 @@ app.get('/send-mail', async (req: express.Request, res: express.Response) => {
   }
 });
 
-const roundMoney = (b) => {
-  return Math.round(b * 100) / 100;
-};
-
 const formatBalance = (b): string => {
-  b = roundMoney(b);
+  b = Math.round(b * 100) / 100;
   if (b < 0) {
     return '<span style="color: red">' + b.toFixed(2) + '</span>';
   } else {
@@ -130,12 +126,14 @@ app.get('/accounts', async (req: express.Request , res: express.Response) => {
 
     if(accounts == undefined) {
       accounts = await e.getDebtors();
+      accounts = accounts.reverse();
     }
     const template = `<table>{{#.}}<tr>
       <td>{{Code}}</td>
       <td><a href="/account/{{ID}}">{{Name}}</a></td>
       <td>{{Email}}</td>
       <td><a href="/trans/{{ID}}">Transactions</a></td>
+      <td><a href="/preview-mail/{{ID}}">Preview mail</a></td>
       </tr>{{/.}}</table>`;
     const html = mustache.render(template, accounts);
     res.write(html);
@@ -156,10 +154,10 @@ app.get('/accbal', async (req: express.Request, res: express.Response) => {
     res.write('Retreiving account list...<br>\n');
     if (accounts == null) {
       accounts = await e.getDebtors();
+      accounts = accounts.reverse();
     }
     res.write('OK, got ' + accounts.length + ' accounts. Fetching transactions and computing balances... <br><br>\n');
 
-    accounts = accounts.reverse();
     for (let i = 0; i < accounts.length; i++) {
 
       if (accounts[i].trans == null) {
