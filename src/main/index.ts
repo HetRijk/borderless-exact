@@ -235,38 +235,16 @@ app.get('/verify', async (req: express.Request , res: express.Response) => {
   }
 });
 
-const formatTransactionList = (trans): string => {
-  const formatMoney = (n) => {
-    const s = n < 0 ? '-' : '+';
-    const str = Math.abs(n).toFixed(2);
-    return '€ ' + s + '&nbsp;&nbsp;&nbsp;&nbsp;'.substring(0, 6 * (6 - str.length)) + str;
-  };
-
-  // Convert a Microsoft AJAX date string (from the Exact API) to a human readable format
-  // e.g. "/Date(012345687)/" to "2017-05-26"
-  const fixDate = (d) => {
-    const date = new Date(parseInt(d.substr(6)));
-    return date.toISOString().substring(0, 10);
-  };
-
-  let tlist = trans.tList
-    .map((x) => x.FinancialYear + '.' + x.FinancialPeriod + ' | ' + fixDate(x.Date)
-         + ' | <kbd>' + formatMoney(-x.AmountDC) + '</kbd> | ' + x.Description);
-
-  tlist = tlist.join('<br>\n');
-  tlist = tlist + '<br><br>';
-
-  const transSum = trans.map((x) => -x.AmountDC).reduce((a, b) => a + b, 0);
-
-  tlist = tlist + 'Start balance: ' + formatMoney(trans.balance - transSum) + '<br>';
-  tlist = tlist + 'Year balance: ' + formatMoney(transSum) + '<br>';
-  tlist = tlist + 'End balance: ' + formatMoney(trans.balance);
-
-  return tlist;
-};
-
 // Turn an array of transactions into an HTML formatted table
-const formatTransactionTable = (trans): string => {
+const formatTransactionTable = async (trans, lastYearOnly : boolean): Promise<string> => {
+  const years = [...new Set(trans.tList.map((x) => x.FinancialYear))];
+  const lastYear = years[years.length-1];
+
+  let tList = trans.tList;
+  if (lastYearOnly) {
+    tList = tList.filter((x) => x.FinancialYear === lastYear);
+  }
+
   // Convert a Microsoft AJAX date string (from the Exact API) to a human readable format
   // e.g. "/Date(012345687)/" to "2017-05-26"
   const fixDate = (d) => {
@@ -274,89 +252,46 @@ const formatTransactionTable = (trans): string => {
     return date.toISOString().substring(0, 10);
   };
 
-  let tblStr = '<table style="border-spacing: 7pt 0pt">\n';
+  for (let t of tList) {
+    t.niceDate = fixDate(t.Date);
+    t.balanceNegStr = ((-t.AmountDC < 0) ? (-t.AmountDC).toFixed(2) : '');
+    t.balancePosStr = ((-t.AmountDC >= 0) ? (-t.AmountDC).toFixed(2) : '');
+  }
 
-  tblStr = tblStr + '<tr>'
-    + '<th style="text-align: left">' + 'Periode</th>'
-    + '<th style="text-align: left">' + 'Datum</th>'
-    + '<th style="text-align: left">' + 'Omschrijving</th>'
-    + '<th style="text-align: right">' + 'Uit (€)</th>'
-    + '<th style="text-align: right">' + 'In (€)</th>'
-    + '</tr>\n';
-
-  const rows = trans.tList.map((x) => '<tr>'
-                       + '<td>' + x.FinancialYear + '.' + x.FinancialPeriod + '</td>'
-                       + '<td>' + fixDate(x.Date) + '</td>'
-                       + '<td>' + x.Description + '</td>'
-                       + '<td style="color: red; text-align: right">' + ((-x.AmountDC < 0) ? (-x.AmountDC).toFixed(2) : '') + '</td>'
-                       + '<td style="color: green; text-align: right">' + ((-x.AmountDC >= 0) ? (-x.AmountDC).toFixed(2) : '') + '</td>'
-                       + '</tr>\n');
-
-  tblStr = tblStr + rows.join('');
-
-  const outSum = trans.tList.map((x) => (-x.AmountDC < 0) ? -x.AmountDC : 0).reduce((a, b) => a + b, 0);
-  const inSum = trans.tList.map((x) => (-x.AmountDC > 0) ? -x.AmountDC : 0).reduce((a, b) => a + b, 0);
+  const outSum = tList.map((x) => (-x.AmountDC < 0) ? -x.AmountDC : 0).reduce((a, b) => a + b, 0);
+  const inSum = tList.map((x) => (-x.AmountDC > 0) ? -x.AmountDC : 0).reduce((a, b) => a + b, 0);
   const netSum = inSum + outSum;
+
   let startBalance = trans.balance - netSum;
   let balance = trans.balance;
-
-  tblStr = tblStr + '<tr><td>&nbsp;</td></tr>\n';
-
-  tblStr = tblStr + '<tr>'
-    + '<td>' + '</td>'
-    + '<td>' + '</td>'
-    + '<th style="text-align: left">' + 'Totaal' + '</th>'
-    + '<td style="color: red; text-align: right">' + outSum.toFixed(2) + '</td>'
-    + '<td style="color: green; text-align: right">' + inSum.toFixed(2) + '</td>'
-    + '</tr>\n';
-
-  tblStr = tblStr + '<tr><td>&nbsp;</td></tr>\n';
 
   // Needed to avoid "-0.00"
   // !! Use only after calculations are done since precision is lost
   startBalance = Math.round(startBalance * 100) / 100;
   balance = Math.round(balance * 100) / 100;
 
-  tblStr = tblStr + '<tr>'
-    + '<td>' + '</td>'
-    + '<td>' + '</td>'
-    + '<th style="text-align: left">' + 'Beginsaldo:' + '</th>'
-    + '<td style="color: red; text-align: right">' + ((startBalance < 0) ? startBalance.toFixed(2) : '') + '</td>'
-    + '<td style="color: green; text-align: right">' + (startBalance >= 0 ? startBalance.toFixed(2) : '') + '</td>'
-    + '</tr>\n';
+  const params = {
+    tList: tList,
+    outSumStr: outSum.toFixed(2),
+    inSumStr: inSum.toFixed(2),
+    startBalanceNegStr: ((startBalance < 0) ? startBalance.toFixed(2) : ''),
+    startBalancePosStr: ((startBalance >= 0) ? startBalance.toFixed(2) : ''),
+    balanceNegStr: ((balance < 0) ? balance.toFixed(2) : ''),
+    balancePosStr: ((balance >= 0) ? balance.toFixed(2) : ''),
+  }
 
-  tblStr = tblStr + '<tr>'
-    + '<td>' + '</td>'
-    + '<td>' + '</td>'
-    + '<th style="text-align: left">' + 'Saldo:' + '</th>'
-    + '<td style="color: red; text-align: right">' + ((balance < 0) ? balance.toFixed(2) : '') + '</td>'
-    + '<td style="color: green; text-align: right">' + (balance >= 0 ? balance.toFixed(2) : '') + '</td>'
-    + '</tr>\n';
-
-  tblStr = tblStr + '</table>\n';
-
-  return tblStr;
+  const template = (await readFile('templates/transaction_table')).toString();
+  return mustache.render(template, params)
 };
 
-app.get('/trans/:accId/:year*?', async (req: express.Request, res: express.Response) => {
+app.get('/trans/:accId', async (req: express.Request, res: express.Response) => {
   res.type('html');
   res.charset = 'utf-8';
   try {
     const account = await e.getAccount(req.params.accId);
     res.write('Listing transaction lines for ' + account.Name + ':<br><br>\n');
-
     const trans = await e.getTransactionsObj(req.params.accId);
-
-    const years = [...new Set(trans.tList.map((x) => x.FinancialYear))];
-    res.write(years.map((x) => '<a href="/trans/' + req.params.accId + '/' + x + '">' + x + '</a> ').join(' '));
-    res.write('<br><br>');
-
-    if ('year' in req.params && req.params.year) {
-      trans.tList = trans.tList.filter((x) => x.FinancialYear === req.params.year);
-    }
-
-    res.write(formatTransactionTable(trans));
-
+    res.write(await formatTransactionTable(trans, false));
     res.write('<br><br><a href="/preview-mail/' + account.ID + '">Preview Email</a>');
   } catch (e) {
     res.write('ERROR: ' + JSON.stringify(e));
@@ -370,7 +305,7 @@ const makeIncassoMail = async (account, trans) => {
     amount: Math.abs(trans.balance).toFixed(2),
     balance: trans.balance.toFixed(2),
     balanceColored: formatBalance(trans.balance),
-    transactions: formatTransactionTable(trans),
+    transactions: await formatTransactionTable(trans, true),
   };
 
   let template = (await readFile('templates/standard_email')).toString();
@@ -395,7 +330,7 @@ app.get('/preview-mail/:accId/', async (req: express.Request, res: express.Respo
   res.charset = 'utf-8';
   try {
     const account = await e.getAccount(req.params.accId);
-    const trans = await e.getTransactionsObj(req.params.accId, '2016'); // TODO proper filtering
+    const trans = await e.getTransactionsObj(req.params.accId);
     res.write((await makeIncassoMail(account, trans)).html);
   } catch (e) {
     res.write('ERROR: ' + JSON.stringify(e));

@@ -1,0 +1,48 @@
+<table style="border-spacing: 7pt 0pt">
+  <tr>
+    <th style="text-align: left">Periode</th>
+    <th style="text-align: left">Datum</th>
+    <th style="text-align: left">Omschrijving</th>
+    <th style="text-align: right">Uit (€)</th>
+    <th style="text-align: right">In (€)</th>
+  </tr>
+  {{#tList}}
+  <tr>
+    <td>{{FinancialYear}}.{{FinancialPeriod}}</td>
+    <td>{{niceDate}}</td>
+    <td>{{Description}}</td>
+    <td style="color: red; text-align: right">{{{balanceNegStr}}}</td>
+    <td style="color: green; text-align: right">{{{balancePosStr}}}</td>
+  </tr>
+  {{/tList}}
+  <tr>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td></td>
+    <th style="text-align: left">Totaal</th>
+    <td style="color: red; text-align: right">{{outSumStr}}</td>
+    <td style="color: green; text-align: right">{{inSumStr}}</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td></td>
+    <th style="text-align: left">Beginsaldo:</th>
+    <td style="color: red; text-align: right">{{startBalanceNegStr}}</td>
+    <td style="color: green; text-align: right">{{startBalancePosStr}}</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td></td>
+    <th style="text-align: left">Saldo:</th>
+    <td style="color: red; text-align: right">{{balanceNegStr}}</td>
+    <td style="color: green; text-align: right">{{balancePosStr}}</td>
+  </tr>
+</table>

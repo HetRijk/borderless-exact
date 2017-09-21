@@ -162,7 +162,7 @@ export default class Exact {
     });
   }
 
-  public async getTransactionsObj(accountID, year = '*') {
+  public async getTransactionsObj(accountID) {
     let tList = await this.getTransactionList(accountID);
     let balance = tList.map(x => -x.AmountDC).reduce((a,b)=>a+b, 0);
 
@@ -171,9 +171,6 @@ export default class Exact {
     }
 
     balance = roundMoney(balance);
-
-    if (year != '*')
-      tList = tList.filter(x => x.FinancialYear == year);
 
     return {tList: tList, balance: balance};
   }
