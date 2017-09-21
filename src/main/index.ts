@@ -143,14 +143,7 @@ app.get('/accounts', async (req: express.Request , res: express.Response) => {
 });
 
 app.get('/account/:accId', async (req: express.Request, res: express.Response) => {
-  try {
-    const contact = await e.getAccount(req.params.accId);
-    contact.BankAccounts = await e.getAccountBankAccounts(req.params.accId);
-    contact.trans = await e.getTransactionsObj(req.params.accId);
-    res.json(contact);
-  } catch (e) {
-    res.json(e);
-  }
+  return res.redirect(e.generateExactContactLink(req.params.accId));
 });
 
 app.get('/accbal', async (req: express.Request, res: express.Response) => {
