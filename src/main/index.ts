@@ -10,7 +10,6 @@ import * as nodemailer from 'nodemailer';
 // import * as multer from 'multer';
 import * as bodyParser from 'body-parser';
 import * as mustache from 'mustache';
-import * as readFile from 'fs-readfile-promise';
 import * as fs from 'fs';
 
 // Homebrew
@@ -221,7 +220,7 @@ app.get('/accbal', async (req: express.Request, res: express.Response) => {
 
 
 // Turn an array of transactions into an HTML formatted table
-const formatTransactionTable = async (trans, lastYearOnly : boolean): Promise<string> => {
+const formatTransactionTable = (trans, lastYearOnly : boolean): Promise<string> => {
   const years = [...new Set(trans.tList.map((x) => x.FinancialYear))];
   const lastYear = years[years.length-1];
 
@@ -265,7 +264,7 @@ const formatTransactionTable = async (trans, lastYearOnly : boolean): Promise<st
     balancePosStr: ((balance >= 0) ? balance.toFixed(2) : ''),
   }
 
-  const template = (await readFile('templates/transaction_table')).toString();
+  const template = readTemplate('transaction_table');
   return mustache.render(template, params)
 };
 
@@ -276,7 +275,7 @@ app.get('/trans/:accId', async (req: express.Request, res: express.Response) => 
     const account = await e.getAccount(req.params.accId);
     res.write('Listing transaction lines for ' + account.Name + ':<br><br>\n');
     const trans = await e.getTransactionsObj(req.params.accId);
-    res.write(await formatTransactionTable(trans, false));
+    res.write(formatTransactionTable(trans, false));
     res.write('<br><br><a href="/preview-mail/' + account.ID + '">Preview Email</a>');
   } catch (e) {
     res.write('ERROR: ' + JSON.stringify(e));
@@ -290,12 +289,16 @@ const makeIncassoMail = async (account, trans) => {
     amount: Math.abs(trans.balance).toFixed(2),
     balance: trans.balance.toFixed(2),
     balanceColored: formatBalance(trans.balance),
-    transactions: await formatTransactionTable(trans, true),
+    transactions: formatTransactionTable(trans, true),
   };
 
-  let template = (await readFile('templates/standard_email')).toString();
+  let template = readTemplate('standard_email');
   if (trans.balance <= -100) {
-    template = (await readFile('templates/extreme_email')).toString();
+    template = readTemplate('extreme_email');
+  } else if(trans.balance <= -100) {
+    template = readTemplate('creditor_email');
+  } else if(trans.balance == 0) {
+    template = readTemplate('zero_email');
   }
   const body = mustache.render(template, variables);
 
