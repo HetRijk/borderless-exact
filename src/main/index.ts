@@ -84,33 +84,6 @@ app.post('/save-settings', (req: express.Request, res: express.Response) => {
   res.redirect('/');
 });
 
-app.get('/send-mail', async (req: express.Request, res: express.Response) => {
-  try {
-    if (!mailSettings) {
-      throw new Error('Invalid State Error: mailsettings have not been setup.');
-    }
-    const html = mustache.to_html(readTemplate('standard_email'), {name: 'Piet Paulusma'});
-    const mailOptions = {
-      from: '"Treasurer-auto AEGEE-Delft" <invoice@aegee-delft.nl>',
-      to: '"Jelle Test" <jlicht@posteo.net>',
-      subject: 'Test mailsysteem',
-      text: 'message - test',
-      html,
-      headers: {
-        'Reply-To': '"Treasurer AEGEE-Delft" <treasurer@aegee-delft.nl>',
-      },
-    };
-
-    const info = await mailSettings.getTransporter().sendMail(mailOptions);
-    console.log('Message %s sent: %s', info.messageId, info.response);
-
-    res.json({});
-  } catch (e) {
-    res.json(e);
-    console.dir(e);
-  }
-});
-
 app.get('/verify', async (req: express.Request , res: express.Response) => {
   try {
     res.json(await tokenWrapper.getTokenPromise());
@@ -133,7 +106,8 @@ app.get('/accounts', async (req: express.Request , res: express.Response) => {
       <td><a href="/account/{{ID}}">{{Name}}</a></td>
       <td>{{Email}}</td>
       <td><a href="/trans/{{ID}}">Transactions</a></td>
-      <td><a href="/preview-mail/{{ID}}">Preview mail</a></td>
+      <td>{{Overzicht}}</td>
+      <td><a href="/send-mail/{{ID}}">Stuur</a></td>
       </tr>{{/.}}</table>`;
     const html = mustache.render(template, accounts);
     res.write(html);
@@ -145,6 +119,23 @@ app.get('/accounts', async (req: express.Request , res: express.Response) => {
 
 app.get('/account/:accId', async (req: express.Request, res: express.Response) => {
   return res.redirect(e.generateExactContactLink(req.params.accId));
+});
+
+app.get('/send-mail/:accId', async (req: express.Request, res: express.Response) => {
+  try {
+    if (!mailSettings) {
+      throw new Error('Invalid State Error: mailsettings have not been setup.');
+    }
+    const account = await e.getAccount(req.params.accId);
+    const trans = await e.getTransactionsObj(req.params.accId); // TODO caching
+    const email = await makeIncassoMail(account, trans);
+    const info = await mailSettings.getTransporter().sendMail(email);
+    console.log('Message %s sent: %s', info.messageId, info.response);
+    res.json({ message: 'All okay'});
+  } catch (e) {
+    res.json(e);
+    console.dir(e);
+  }
 });
 
 app.get('/accbal', async (req: express.Request, res: express.Response) => {
@@ -185,7 +176,6 @@ app.get('/accbal', async (req: express.Request, res: express.Response) => {
       <td>{{MainBankAccount.IBAN}}</td>
       <td style="text-align: right;">{{{balanceHTML}}}</td>
       <td><a href="/trans/{{ID}}">Transactions</a></td>
-      <td><a href="/preview-mail/{{ID}}">Preview mail</a></td>
       </tr>{{/.}}</table>`;
 
     let debcred = accounts.filter((x) => x.balance !== undefined && x.balance !== 0);
@@ -277,7 +267,6 @@ app.get('/trans/:accId', async (req: express.Request, res: express.Response) => 
     res.write('Listing transaction lines for ' + account.Name + ':<br><br>\n');
     const trans = await e.getTransactionsObj(req.params.accId);
     res.write(await formatTransactionTable(trans, false));
-    res.write('<br><br><a href="/preview-mail/' + account.ID + '">Preview Email</a>');
   } catch (e) {
     res.write('ERROR: ' + JSON.stringify(e));
   }
@@ -301,27 +290,17 @@ const makeIncassoMail = async (account, trans) => {
 
   const mailOptions = {
     from: '"Treasurer-auto AEGEE-Delft" <invoice@aegee-delft.nl>',
-    to: '"' + account.Name + '" <' + account.Email + '>',
-    subject: 'Incasso',
+    to: `"${account.Name}" <${account.Email}>`,
+    subject: 'Personal financial overview AEGEE-Delft',
     text: 'Please view HTML body',
     html: body,
+    headers: {
+      'Reply-To': '"Treasurer AEGEE-Delft" <treasurer@aegee-delft.nl>',
+    },
   };
 
   return mailOptions;
 };
-
-app.get('/preview-mail/:accId/', async (req: express.Request, res: express.Response) => {
-  res.type('html');
-  res.charset = 'utf-8';
-  try {
-    const account = await e.getAccount(req.params.accId);
-    const trans = await e.getTransactionsObj(req.params.accId);
-    res.write((await makeIncassoMail(account, trans)).html);
-  } catch (e) {
-    res.write('ERROR: ' + JSON.stringify(e));
-  }
-  res.end();
-});
 
 app.listen(3000,  () => {
   console.log('Listening on http://localhost:3000/');
