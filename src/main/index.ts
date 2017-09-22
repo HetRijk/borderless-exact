@@ -6,7 +6,6 @@ import * as passport from 'passport';
 import * as OAuth2Strategy from 'passport-oauth2';
 import * as express from 'express';
 import * as opn from 'opn';
-import * as nodemailer from 'nodemailer';
 // import * as multer from 'multer';
 import * as bodyParser from 'body-parser';
 import * as mustache from 'mustache';
