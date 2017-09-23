@@ -6,7 +6,6 @@ import * as passport from 'passport';
 import * as OAuth2Strategy from 'passport-oauth2';
 import * as express from 'express';
 import * as opn from 'opn';
-import * as nodemailer from 'nodemailer';
 // import * as multer from 'multer';
 import * as bodyParser from 'body-parser';
 import * as mustache from 'mustache';
@@ -65,7 +64,6 @@ app.get('/', async (req: express.Request , res: express.Response) => {
     res.write('Logged in as ' + await e.getMyName() + '.<br>\n');
     res.write('<br>\n')
     res.write('<a href="/mail-form.html">Enter mail settings</a><br>\n');
-    res.write('<a href="/send-mail">Send test email</a><br>\n');
     res.write('<br>\n');
     res.write('<a href="/accounts">List accounts</a><br>\n');
     res.write('<a href="/accbal">List account balances</a><br>\n');
@@ -81,33 +79,6 @@ app.post('/save-settings', (req: express.Request, res: express.Response) => {
   const { server, email, password} = req.body;
   mailSettings = new MailSettings( server, email, password); // TODO(@jlicht): filthy global
   res.redirect('/');
-});
-
-app.get('/send-mail', async (req: express.Request, res: express.Response) => {
-  try {
-    if (!mailSettings) {
-      throw new Error('Invalid State Error: mailsettings have not been setup.');
-    }
-    const html = mustache.to_html(readTemplate('standard_email'), {name: 'Piet Paulusma'});
-    const mailOptions = {
-      from: '"Treasurer-auto AEGEE-Delft" <invoice@aegee-delft.nl>',
-      to: '"Jelle Test" <jlicht@posteo.net>',
-      subject: 'Test mailsysteem',
-      text: 'message - test',
-      html,
-      headers: {
-        'Reply-To': '"Treasurer AEGEE-Delft" <treasurer@aegee-delft.nl>',
-      },
-    };
-
-    const info = await mailSettings.getTransporter().sendMail(mailOptions);
-    console.log('Message %s sent: %s', info.messageId, info.response);
-
-    res.json({});
-  } catch (e) {
-    res.json(e);
-    console.dir(e);
-  }
 });
 
 app.get('/verify', async (req: express.Request , res: express.Response) => {
@@ -132,7 +103,8 @@ app.get('/accounts', async (req: express.Request , res: express.Response) => {
       <td><a href="/account/{{ID}}">{{Name}}</a></td>
       <td>{{Email}}</td>
       <td><a href="/trans/{{ID}}">Transactions</a></td>
-      <td><a href="/preview-mail/{{ID}}">Preview mail</a></td>
+      <td><a href="/preview-mail/{{ID}}">Preview mail</a></td> 
+      <td><a href="/send-mail/{{ID}}">Send mail</a></td>
       </tr>{{/.}}</table>`;
     const html = mustache.render(template, accounts);
     res.write(html);
@@ -144,6 +116,36 @@ app.get('/accounts', async (req: express.Request , res: express.Response) => {
 
 app.get('/account/:accId', async (req: express.Request, res: express.Response) => {
   return res.redirect(e.generateExactContactLink(req.params.accId));
+});
+
+app.get('/preview-mail/:accId/', async (req: express.Request, res: express.Response) => {
+   res.type('html');
+   res.charset = 'utf-8';
+   try {
+     const account = await e.getAccount(req.params.accId);
+     const trans = await e.getTransactionsObj(req.params.accId);
+     res.write((await makeIncassoMail(account, trans)).html);
+   } catch (e) {
+     res.write('ERROR: ' + JSON.stringify(e));
+   }
+  res.end();
+});
+
+app.get('/send-mail/:accId', async (req: express.Request, res: express.Response) => {
+  try {
+    if (!mailSettings) {
+      throw new Error('Invalid State Error: mailsettings have not been setup.');
+    }
+    const account = await e.getAccount(req.params.accId);
+    const trans = await e.getTransactionsObj(req.params.accId); // TODO caching
+    const email = await makeIncassoMail(account, trans);
+    const info = await mailSettings.getTransporter().sendMail(email);
+    console.log('Message %s sent: %s', info.messageId, info.response);
+    res.json({ message: 'All okay'});
+  } catch (e) {
+    res.json(e);
+    console.dir(e);
+  }
 });
 
 app.get('/accbal', async (req: express.Request, res: express.Response) => {
@@ -184,7 +186,6 @@ app.get('/accbal', async (req: express.Request, res: express.Response) => {
       <td>{{MainBankAccount.IBAN}}</td>
       <td style="text-align: right;">{{{balanceHTML}}}</td>
       <td><a href="/trans/{{ID}}">Transactions</a></td>
-      <td><a href="/preview-mail/{{ID}}">Preview mail</a></td>
       </tr>{{/.}}</table>`;
 
     let debcred = accounts.filter((x) => x.balance !== undefined && x.balance !== 0);
@@ -303,28 +304,18 @@ const makeIncassoMail = async (account, trans) => {
   const body = mustache.render(template, variables);
 
   const mailOptions = {
-    from: '"Treasurer-auto AEGEE-Delft" <invoice@aegee-delft.nl>',
-    to: '"' + account.Name + '" <' + account.Email + '>',
-    subject: 'Incasso',
-    text: 'Please view HTML body',
+    from: '"Automatic Invoice AEGEE-Delft" <invoice@aegee-delft.nl>',
+    to: `"${account.Name}" <${account.Email}>`,
+    subject: 'AEGEE-Delft Personal Financial Overview',
+    text: 'Please see HTML body',
     html: body,
+    headers: {
+      'Reply-To': '"Treasurer AEGEE-Delft" <treasurer@aegee-delft.nl>',
+    },
   };
 
   return mailOptions;
 };
-
-app.get('/preview-mail/:accId/', async (req: express.Request, res: express.Response) => {
-  res.type('html');
-  res.charset = 'utf-8';
-  try {
-    const account = await e.getAccount(req.params.accId);
-    const trans = await e.getTransactionsObj(req.params.accId);
-    res.write((await makeIncassoMail(account, trans)).html);
-  } catch (e) {
-    res.write('ERROR: ' + JSON.stringify(e));
-  }
-  res.end();
-});
 
 app.listen(3000,  () => {
   console.log('Listening on http://localhost:3000/');
