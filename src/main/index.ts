@@ -65,7 +65,6 @@ app.get('/', async (req: express.Request , res: express.Response) => {
     res.write('Logged in as ' + await e.getMyName() + '.<br>\n');
     res.write('<br>\n')
     res.write('<a href="/mail-form.html">Enter mail settings</a><br>\n');
-    res.write('<a href="/send-mail">Send test email</a><br>\n');
     res.write('<br>\n');
     res.write('<a href="/accounts">List accounts</a><br>\n');
     res.write('<a href="/accbal">List account balances</a><br>\n');
@@ -105,8 +104,8 @@ app.get('/accounts', async (req: express.Request , res: express.Response) => {
       <td><a href="/account/{{ID}}">{{Name}}</a></td>
       <td>{{Email}}</td>
       <td><a href="/trans/{{ID}}">Transactions</a></td>
-      <td>{{Overzicht}}</td>
-      <td><a href="/send-mail/{{ID}}">Stuur</a></td>
+      <td><a href="/preview-mail/{{ID}}">Preview mail</a></td> 
+      <td><a href="/send-mail/{{ID}}">Send mail</a></td>
       </tr>{{/.}}</table>`;
     const html = mustache.render(template, accounts);
     res.write(html);
@@ -118,6 +117,19 @@ app.get('/accounts', async (req: express.Request , res: express.Response) => {
 
 app.get('/account/:accId', async (req: express.Request, res: express.Response) => {
   return res.redirect(e.generateExactContactLink(req.params.accId));
+});
+
+app.get('/preview-mail/:accId/', async (req: express.Request, res: express.Response) => {
+   res.type('html');
+   res.charset = 'utf-8';
+   try {
+     const account = await e.getAccount(req.params.accId);
+     const trans = await e.getTransactionsObj(req.params.accId);
+     res.write((await makeIncassoMail(account, trans)).html);
+   } catch (e) {
+     res.write('ERROR: ' + JSON.stringify(e));
+   }
+  res.end();
 });
 
 app.get('/send-mail/:accId', async (req: express.Request, res: express.Response) => {
