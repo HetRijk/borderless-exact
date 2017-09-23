@@ -300,10 +300,10 @@ const makeIncassoMail = async (account, trans) => {
   const body = mustache.render(template, variables);
 
   const mailOptions = {
-    from: '"Treasurer-auto AEGEE-Delft" <invoice@aegee-delft.nl>',
+    from: '"Automatic Invoice AEGEE-Delft" <invoice@aegee-delft.nl>',
     to: `"${account.Name}" <${account.Email}>`,
-    subject: 'Personal financial overview AEGEE-Delft',
-    text: 'Please view HTML body',
+    subject: 'AEGEE-Delft Personal Financial Overview',
+    text: 'Please see HTML body',
     html: body,
     headers: {
       'Reply-To': '"Treasurer AEGEE-Delft" <treasurer@aegee-delft.nl>',
