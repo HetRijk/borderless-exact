@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+table {
+    text-align: left;
+    padding: 8px;
+}
+</style>
+</head>
+<body>
+
+Beste {{name}},</br></br>
+
+Binnen een paar dagen zal jouw openstaande saldo bij AEGEE-Delft van {{{balanceColored}}} worden verrekend middels incasso. Dit zijn de bedragen voor bijvoorbeeld diners en de geturfde drank.</br></br>
+
+Het overzicht van waarvan de kosten zijn kan je onderaan deze mail vinden.</br></br>
+
+Deze mail is automatisch verstuurd, indien er iets fout is gegaan of er andere vragen zijn hoor ik dat daarom graag.
+Dit kan als reactie op deze email of door een aparte mail te versturen naar treasurer@aegee-delft.nl.</br></br>
+
+Met vriendelijke groet,</br></br>
+
+Thorben Besseling<br>
+<i>Treasurer of AEGEE-Delft<br>
+XXXVth Board 'Qui-Vive'</i></br></br>
+
+<table style="text-align: left; padding: 8px;">
+  <tr>
+    <td><b>Tel:</b></td>
+    <td></td>
+    <td>+31 6 55019127</td>
+  </tr>
+  <tr>
+    <td><b>Email:</b></td>
+    <td></td>
+    <td>treasurer@aegee-delft.nl</td>
+  </tr>
+  <tr>
+    <td><b>Adres:</b></td>
+    <td></td>
+    <td>Leeghwaterstraat 42</br></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td></td>
+    <td>2628 CA Delft</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+    <td>Nederland</td>
+  </tr>
+</table>
+
+<br>
+<hr>
+<br>
+<br>
+
+{{{transactions}}}
+
+</body>
+</html>
