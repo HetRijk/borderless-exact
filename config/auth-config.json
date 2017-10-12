@@ -1,6 +1,6 @@
 {
-  "client-id": "f5fcbe04-c19e-45c4-8aa5-f9316d70bb0d",
-  "client-secret": "WhKLQKKQjkOY",
+  "client-id": "8e0b6936-6073-4aa1-a237-e557c520b72a",
+  "client-secret": "xxx",
   "callback-url": "http://localhost:3000/auth/callback",
   "authorization-url": "https://start.exactonline.nl/api/oauth2/auth",
   "token-url": "https://start.exactonline.nl/api/oauth2/token"
