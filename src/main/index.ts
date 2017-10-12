@@ -221,7 +221,7 @@ app.get('/accbal', async (req: express.Request, res: express.Response) => {
 
 
 // Turn an array of transactions into an HTML formatted table
-const formatTransactionTable = (trans, lastYearOnly : boolean): Promise<string> => {
+const formatTransactionTable = async (trans, lastYearOnly : boolean) => {
   const years = [...new Set(trans.tList.map((x) => x.FinancialYear))];
   const lastYear = years[years.length-1];
 
@@ -276,7 +276,7 @@ app.get('/trans/:accId', async (req: express.Request, res: express.Response) => 
     const account = await e.getAccount(req.params.accId);
     res.write('Listing transaction lines for ' + account.Name + ':<br><br>\n');
     const trans = await e.getTransactionsObj(req.params.accId);
-    res.write(formatTransactionTable(trans, false));
+    res.write( await formatTransactionTable(trans, false));
     res.write('<br><br><a href="/preview-mail/' + account.ID + '">Preview Email</a>');
   } catch (e) {
     res.write('ERROR: ' + JSON.stringify(e));
