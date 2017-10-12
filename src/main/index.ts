@@ -239,7 +239,7 @@ app.get('/accbal/:id?', async (req: express.Request, res: express.Response) => {
 
 
 // Turn an array of transactions into an HTML formatted table
-const formatTransactionTable = (trans, lastYearOnly : boolean): Promise<string> => {
+const formatTransactionTable = async (trans, lastYearOnly : boolean) => {
   const years = [...new Set(trans.tList.map((x) => x.FinancialYear))];
   const lastYear = years[years.length-1];
 
