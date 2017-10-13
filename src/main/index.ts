@@ -92,10 +92,10 @@ app.get('/verify', async (req: express.Request , res: express.Response) => {
 app.get('/accounts', async (req: express.Request , res: express.Response) => {
   res.type('html');
   try {
-    res.write('Listing all debitor/creditor accounts...<br><br>\n');
+    res.write('Listing all accounts...<br><br>\n');
 
     if(accounts == undefined) {
-      accounts = await e.getDebtors();
+      accounts = await e.getAccounts();
       accounts = accounts.reverse();
     }
     const template = `<table>{{#.}}<tr>
@@ -103,7 +103,7 @@ app.get('/accounts', async (req: express.Request , res: express.Response) => {
       <td><a href="/account/{{ID}}">{{Name}}</a></td>
       <td>{{Email}}</td>
       <td><a href="/trans/{{ID}}">Transactions</a></td>
-      <td><a href="/preview-mail/{{ID}}">Preview mail</a></td> 
+      <td><a href="/preview-mail/{{ID}}">Preview mail</a></td>
       <td><a href="/send-mail/{{ID}}">Send mail</a></td>
       </tr>{{/.}}</table>`;
     const html = mustache.render(template, accounts);
@@ -154,7 +154,7 @@ app.get('/accbal', async (req: express.Request, res: express.Response) => {
   try {
     res.write('Retreiving account list...<br>\n');
     if (accounts == null) {
-      accounts = await e.getDebtors();
+      accounts = await e.getAccounts();
       accounts = accounts.reverse();
     }
     res.write('OK, got ' + accounts.length + ' accounts. Fetching transactions and computing balances... <br><br>\n');

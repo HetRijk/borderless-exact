@@ -147,7 +147,14 @@ export default class Exact {
     return bas[0];
   }
 
-  public async getDebtors() {
+  public async getAccounts() {
+      return this.query('crm/Accounts', {
+        $select: 'ID,Code,Name,Email',
+        $orderby: 'Code',
+      });
+  }
+
+  public async getCreditorsDebtors() {
       return this.query('crm/Accounts', {
         $select: 'ID,Code,Name,Email',
         $orderby: 'Code',
