@@ -22,46 +22,8 @@ Dit kan door een aparte mail te versturen naar treasurer@aegee-delft.nl.
 <br><br>
 Met vriendelijke groet,
 <br><br>
-Thorben Besseling<br>
-<i>Treasurer of AEGEE-Delft<br>
-XXXVth Board 'Qui-Vive'</i>
+
 <br><br>
-
-<table style="text-align: left; padding: 8px;">
-  <tr>
-    <td><b>Tel:</b></td>
-    <td></td>
-    <td>+31 6 55019127</td>
-  </tr>
-  <tr>
-    <td><b>Email:</b></td>
-    <td></td>
-    <td>treasurer@aegee-delft.nl</td>
-  </tr>
-  <tr>
-    <td><b>Adres:</b></td>
-    <td></td>
-    <td>Leeghwaterstraat 42</br></td>
-  </tr>
-  <tr>
-    <td></td>
-    <td></td>
-    <td>2628 CA Delft</td>
-  </tr>
-  <tr>
-    <td></td>
-    <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
-    <td>Nederland</td>
-  </tr>
-</table>
-
-<br>
-<hr>
-<br>
-<br>
-
-{{{transactions}}}
-
 Dear {{name}},
 <br><br>
 Within a few days your open balance at AEGEE-Delft will be collected from your bank account by automatic bank withdrawal. These are open costs for e.g. the weekly dinner and subscription for activities. 
@@ -73,6 +35,7 @@ This e-mail has been sent automatically, please let me know if there is somethin
 <br><br>
 Kind regards,
 <br><br>
+
 Thorben Besseling<br>
 <i>Treasurer of AEGEE-Delft<br>
 XXXVth Board 'Qui-Vive'</i>
@@ -113,5 +76,3 @@ XXXVth Board 'Qui-Vive'</i>
 
 {{{transactions}}}
 
-</body>
-</html>
