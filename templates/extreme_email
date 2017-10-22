@@ -31,7 +31,7 @@ Dit kan als reactie op deze email of door een aparte mail te versturen naar trea
 Dear {{name}}, <br><br>
 
 This month your outstanding debt with AEGEE-Delft is more than 100€. This means that it cannot be collected by debt collection. Therefore, you must transfer this yourself. </br>
-Please transfer the amount of {{amount}} € within 14 days to NL83RABO0122893875 in the name of AEGEE-Delft with the description “Openstaande kosten {{month}}”. 
+Please transfer the amount of <span style="color: red;">€{{amount}}</span> € within 14 days to NL83RABO0122893875 in the name of AEGEE-Delft with the description “Openstaande kosten {{month}}”. 
 <br><br>
 
 An overview of the costs that lead to this amount can be found at the bottom of this email. <br><br>
