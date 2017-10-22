@@ -13,7 +13,7 @@ table {
 
 Beste {{name}},
 <br><br>
-Binnen een paar dagen zal jouw openstaande saldo bij AEGEE-Delft van {{{balanceColored}}} worden verrekend middels incasso. Dit zijn de bedragen voor bijvoorbeeld diners en de geturfde drank.
+Binnen een paar dagen zal jouw positieve saldo bij AEGEE-Delft van {{{balanceColored}}} worden uitbetaald naar jouw rekening. Dit zijn kosten die AEGEE-Delft aan jou verschuldigd is door bijvoorbeeld declaraties minus de kosten die jij bij AEGEE-Delft hebt gemaakt voor bijvoorbeeld diners en activiteiten,
 <br><br>
 Het overzicht van waarvan de kosten zijn kan je onderaan deze mail vinden.
 <br><br>
@@ -22,6 +22,21 @@ Dit kan als reactie op deze email of door een aparte mail te versturen naar trea
 <br><br>
 Met vriendelijke groet,
 <br><br>
+
+<br><br>
+Dear {{name}},
+<br><br>
+Binnen een paar dagen zal jouw positieve saldo bij AEGEE-Delft van {{{balanceColored}}} worden uitbetaald naar jouw rekening. Dit zijn kosten die AEGEE-Delft aan jou verschuldigd is door bijvoorbeeld declaraties minus de kosten die jij bij AEGEE-Delft hebt gemaakt voor bijvoorbeeld diners en activiteiten.
+
+<br><br>
+Het overzicht van waarvan de kosten zijn kan je onderaan deze mail vinden.
+<br><br>
+Deze mail is automatisch verstuurd, indien er iets fout is gegaan of er andere vragen zijn hoor ik dat daarom graag.
+Dit kan als reactie op deze email of door een aparte mail te versturen naar treasurer@aegee-delft.nl.
+<br><br>
+Met vriendelijke groet,
+<br><br>
+
 Thorben Besseling<br>
 <i>Treasurer of AEGEE-Delft<br>
 XXXVth Board 'Qui-Vive'</i>
