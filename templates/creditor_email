@@ -13,7 +13,7 @@ table {
 
 Beste {{name}},
 <br><br>
-Binnen een paar dagen zal jouw positieve saldo bij AEGEE-Delft van {{{balanceColored}}} worden uitbetaald naar jouw rekening. Dit zijn kosten die AEGEE-Delft aan jou verschuldigd is door bijvoorbeeld declaraties minus de kosten die jij bij AEGEE-Delft hebt gemaakt voor bijvoorbeeld diners en activiteiten,
+Binnen een paar dagen zal jouw positieve saldo bij AEGEE-Delft van {{{balanceColored}}} € worden uitbetaald naar jouw rekening. Dit zijn kosten die AEGEE-Delft aan jou verschuldigd is door bijvoorbeeld declaraties minus de kosten die jij bij AEGEE-Delft hebt gemaakt voor bijvoorbeeld diners en activiteiten,
 <br><br>
 Het overzicht van waarvan de kosten zijn kan je onderaan deze mail vinden.
 <br><br>
@@ -26,7 +26,7 @@ Met vriendelijke groet,
 <br><br>
 Dear {{name}},
 <br><br>
-Binnen een paar dagen zal jouw positieve saldo bij AEGEE-Delft van {{{balanceColored}}} worden uitbetaald naar jouw rekening. Dit zijn kosten die AEGEE-Delft aan jou verschuldigd is door bijvoorbeeld declaraties minus de kosten die jij bij AEGEE-Delft hebt gemaakt voor bijvoorbeeld diners en activiteiten.
+Binnen een paar dagen zal jouw positieve saldo bij AEGEE-Delft van {{{balanceColored}}} € worden uitbetaald naar jouw rekening. Dit zijn kosten die AEGEE-Delft aan jou verschuldigd is door bijvoorbeeld declaraties minus de kosten die jij bij AEGEE-Delft hebt gemaakt voor bijvoorbeeld diners en activiteiten.
 
 <br><br>
 Het overzicht van waarvan de kosten zijn kan je onderaan deze mail vinden.
