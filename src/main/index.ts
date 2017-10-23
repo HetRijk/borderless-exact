@@ -298,7 +298,7 @@ const makeIncassoMail = async (account, trans) => {
   let template = readTemplate('standard_email');
   if (trans.balance <= -100) {
     template = readTemplate('extreme_email');
-  } else if(trans.balance <= -100) {
+  } else if(trans.balance < 0) {
     template = readTemplate('creditor_email');
   } else if(trans.balance == 0) {
     template = readTemplate('zero_email');
