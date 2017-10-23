@@ -266,7 +266,9 @@ const formatTransactionTable = (trans, lastYearOnly : boolean): Promise<string> 
   }
 
   const template = readTemplate('transaction_table');
-  return mustache.render(template, params)
+  return new Promise((resolve, reject) => {
+    resolve(mustache.render(template, params));
+  });
 };
 
 app.get('/trans/:accId', async (req: express.Request, res: express.Response) => {
