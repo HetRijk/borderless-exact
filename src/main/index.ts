@@ -75,6 +75,14 @@ app.get('/', async (req: express.Request , res: express.Response) => {
   }
 });
 
+app.get('/crash',  (req: express.Request , res: express.Response) => {
+  res.type('html');
+  res.write('<br>\n')
+  res.write('<p>crashing...</p>')
+  res.end();
+  process.exit(7331);
+});
+
 app.post('/save-settings', (req: express.Request, res: express.Response) => {
   const { server, email, password} = req.body;
   mailSettings = new MailSettings( server, email, password); // TODO(@jlicht): filthy global
