@@ -278,7 +278,7 @@ app.get('/trans/:accId', async (req: express.Request, res: express.Response) => 
     const account = await e.getAccount(req.params.accId);
     res.write('Listing transaction lines for ' + account.Name + ':<br><br>\n');
     const trans = await e.getTransactionsObj(req.params.accId);
-    res.write(formatTransactionTable(trans, false));
+    res.write( await formatTransactionTable(trans, false));
     res.write('<br><br><a href="/preview-mail/' + account.ID + '">Preview Email</a>');
   } catch (e) {
     res.write('ERROR: ' + JSON.stringify(e));
@@ -292,7 +292,7 @@ const makeIncassoMail = async (account, trans) => {
     amount: Math.abs(trans.balance).toFixed(2),
     balance: trans.balance.toFixed(2),
     balanceColored: formatBalance(trans.balance),
-    transactions: formatTransactionTable(trans, true),
+    transactions: await formatTransactionTable(trans, true),
   };
 
   let template = readTemplate('standard_email');
