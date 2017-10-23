@@ -68,6 +68,7 @@ app.get('/', async (req: express.Request , res: express.Response) => {
     res.write('<a href="/accounts">List accounts</a><br>\n');
     res.write('<a href="/accbal">List account balances</a><br>\n');
     res.write('<br>\n');
+    res.write('<a href="/crash">Crash/logout</a><br>\n');
 
     res.end();
   } catch (e) {
