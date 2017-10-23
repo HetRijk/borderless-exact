@@ -13,7 +13,8 @@
     "prestart": "npm run build",
     "test": "mocha --colors --recursive --require source-map-support/register dist/test",
     "build": "tsc",
-    "start": "node dist/main/index.js"
+    "start": "node dist/main/index.js",
+    "deploy": "deploy --alias host-1"
   },
   "repository": {
     "type": "git",
@@ -50,6 +51,7 @@
     "@types/passport": "^0.3.3",
     "@types/restler": "^3.1.5",
     "@types/sinon": "^1.16.34",
+    "deploy-rsync": "^2.3.1",
     "mocha": "^3.2.0",
     "mocha-clean": "^1.0.0",
     "moq.ts": "^1.0.0",
@@ -58,5 +60,16 @@
     "tslint": "^4.3.1",
     "typemoq": "^1.1.0",
     "typescript": "^2.2.1"
+  },
+  "deploy": {
+    "destinations": [ {
+      "dest": "root@aegee.jlicht.org:/root/borderless-exact-auto",
+      "name": "Host #1",
+      "alias": "host-1"
+    }],
+    "args": [ "--update" ],
+    "src": ".",
+    "dest": "dist",
+    "args": [ "-av" ]
   }
 }
