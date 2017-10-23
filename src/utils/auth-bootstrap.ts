@@ -42,13 +42,12 @@ export default class AuthBootstrap {
   private static extractCallbackPath(callbackURL: url.Url): string {
     const {hostname, pathname} = callbackURL;
     if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      throw new Error('Callback url is not bound to localhost!');
+      console.log('Callback url is not bound to localhost!');
     } else if (!pathname) {
       throw new Error('No path in callback url!');
-    } else {
-      console.log(pathname);
-      return pathname;
     }
+    console.log(pathname);
+    return pathname || "";
   }
 
   public hookServer(app: express.Express, authEntryPath: string, authorizedHandler: express.Handler) {
