@@ -148,7 +148,13 @@ app.get('/send-mail/:accId', async (req: express.Request, res: express.Response)
   }
 });
 
-app.get('/accbal', async (req: express.Request, res: express.Response) => {
+const MAX_HACK = 200; //TODO: change this
+app.get('/accbal/:id?', async (req: express.Request, res: express.Response) => {
+  const id = +req.params.id || 0;
+  const prevLink = '/accbal/' + String(id-1);
+  const nextLink = '/accbal/' + String(id+1);
+  const minIterator = id * MAX_HACK;
+  const maxIterator = minIterator + MAX_HACK;
   res.type('html');
   res.charset = 'utf-8';
   try {
@@ -159,7 +165,7 @@ app.get('/accbal', async (req: express.Request, res: express.Response) => {
     }
     res.write('OK, got ' + accounts.length + ' accounts. Fetching transactions and computing balances... <br><br>\n');
 
-    for (let i = 0; i < accounts.length; i++) {
+    for (let i = minIterator; i < accounts.length && i < maxIterator; i++) {
 
       if (accounts[i].trans == null) {
         accounts[i].trans = await e.getTransactionsObj(accounts[i].ID);
@@ -177,7 +183,10 @@ app.get('/accbal', async (req: express.Request, res: express.Response) => {
       }
     }
 
+
     res.write('<br><br>Done.<br><br>');
+    res.write(`<br><br><a href="${prevLink}">previous page</a><br><br>`);
+    res.write(`<br><br><a href="${nextLink}">next page</a><br><br>`);
 
     const template = `<table>{{#.}}<tr>
       <td style="text-align: right;">{{Code}}</td>
@@ -290,7 +299,7 @@ const makeIncassoMail = async (account, trans) => {
   const variables = {
     name: account.Name,
     amount: Math.abs(trans.balance).toFixed(2),
-    balance: trans.balance.toFixed(2),
+    balance: Number(trans.balance.toFixed(2)),
     balanceColored: formatBalance(trans.balance),
     transactions: await formatTransactionTable(trans, true),
   };
@@ -298,7 +307,7 @@ const makeIncassoMail = async (account, trans) => {
   let template = readTemplate('standard_email');
   if (trans.balance <= -100) {
     template = readTemplate('extreme_email');
-  } else if(trans.balance < 0) {
+  } else if(trans.balance > 0) {
     template = readTemplate('creditor_email');
   } else if(trans.balance == 0) {
     template = readTemplate('zero_email');
