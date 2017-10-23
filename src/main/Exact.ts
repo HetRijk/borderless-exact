@@ -151,7 +151,6 @@ export default class Exact {
       return this.query('crm/Accounts', {
         $select: 'ID,Code,Name,Email',
         $orderby: 'Code',
-        $filter 'Code gt 400',
       });
   }
 
