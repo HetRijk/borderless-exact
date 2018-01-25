@@ -13,7 +13,7 @@ table {
 
 Beste {{name}},
 <br><br>
-Binnen een paar dagen zal jouw openstaande saldo bij AEGEE-Delft van {{{balanceColored}}} € worden verrekend middels incasso. Dit zijn de bedragen voor bijvoorbeeld diners en activiteiten.
+Binnen een paar dagen zal jouw openstaande saldo bij AEGEE-Delft van € {{{balanceColored}}}  worden verrekend middels incasso. Dit zijn de bedragen voor bijvoorbeeld diners en activiteiten.
 <br><br>
 Het overzicht van waarvan de kosten zijn kan je onderaan deze mail vinden.
 <br><br>
@@ -26,10 +26,9 @@ Met vriendelijke groet,
 <br><br>
 Dear {{name}},
 <br><br>
-Within a few days your open balance at AEGEE-Delft of {{{balanceColored}}} € will be collected from your bank account by automatic bank withdrawal. These are open costs for e.g. the weekly dinner and subscription for activities. 
+Within a few days your open balance at AEGEE-Delft of € {{{balanceColored}}} will be collected from your bank account by automatic bank withdrawal. These are open costs for e.g. the weekly dinner and subscription for activities. 
 <br><br>
 An overview of the costs can be found at the bottom of this mail.
-Het overzicht van waarvan de kosten zijn kan je onderaan deze mail vinden.
 <br><br>
 This e-mail has been sent automatically, please let me know if there is something wrong or if you have any questions by sending an e-mail to treasurer@aegee-delft.nl or replying to this e-mail.
 <br><br>
