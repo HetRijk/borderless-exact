@@ -36,6 +36,7 @@
     "opn": "^5.1.0",
     "passport": "^0.3.2",
     "passport-oauth2": "^1.4.0",
+    "passport-oauth2-refresh": "^1.0.0",
     "refresh-token": "^1.0.0",
     "restler": "^3.4.0",
     "restler-promise": "0.0.6"
