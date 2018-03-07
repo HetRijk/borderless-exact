@@ -9,8 +9,8 @@ RUN npm install --only=production # Yay docker caching http://bitjudo.com/blog/2
 # Bundle app source
 COPY . .
 
-EXPOSE 3000 # TODO: refactor exposed port
+EXPOSE 3000
 ENV NODE_ENV="production"
 
 USER node
-CMD ["node" "dist/main/index.js"]
+CMD ["node", "dist/main/index.js"]

@@ -1,0 +1,15 @@
+version: '2.0'
+
+services:
+
+    snitch:
+        build:
+          context: ./
+          dockerfile: ./Dockerfile
+        image: aegee-delft/snitch
+        volumes:
+          - sourcecode:/sourcecode
+
+
+volumes:
+  sourcecode:
