@@ -16,7 +16,7 @@ export interface IExactOptions {// extends OAuth2Strategy.StrategyOptions {
 
 export class ExactStrategy extends OAuth2Strategy {
   public readonly name: string;
-  private readonly baseUrl: string;
+  public readonly baseUrl: string;
 
   constructor(options: IExactOptions, verify: OAuth2Strategy.VerifyFunction) {
 

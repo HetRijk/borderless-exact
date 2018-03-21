@@ -1,3 +1,10 @@
+
+export interface IUserCompound {
+  accessToken: string;
+  refreshToken: string;
+  profile: IUser;
+}
+
 export interface IUser {
   CurrentDivision: number;
   DivisionCustomerName: string;

@@ -13,7 +13,7 @@
     "prestart": "npm run build",
     "test": "mocha --colors --recursive --require source-map-support/register dist/test",
     "build": "tsc",
-    "start": "node dist/main/index.js",
+    "start": "node dist/megatest.js",
     "deploy": "deploy --alias host-1"
   },
   "repository": {
