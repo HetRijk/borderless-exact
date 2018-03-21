@@ -243,7 +243,7 @@ app.get('/preview-mail/:accId/', ensureLoggedIn, async (req: express.Request, re
     const { user } = extractUserFromRequestSession(req);
     const account = await exactQuery.getAccount(user, req.params.accId);
     const trans = await exactQuery.getTransactionsObj(user, req.params.accId);
-    //res.write((await makeIncassoMail(account, trans)).html); //TODO
+    res.write((await makeIncassoMail(account, trans)).html); //TODO
   } catch (e) {
     res.write('ERROR: ' + JSON.stringify(e));
   }
