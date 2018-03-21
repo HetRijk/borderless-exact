@@ -22,7 +22,7 @@ const User = new Storage<IUserCompound>();
 const tokenRefresh = new AuthTokenRefresh();
 
 function readTemplate(filename: string): string {
-  return fs.readFileSync( __dirname + '/../../templates/' + filename, 'utf8');
+  return fs.readFileSync( __dirname + '/../templates/' + filename, 'utf8');
 }
 
 function extractUserFromRequestSession(req: express.Request)  {
@@ -405,6 +405,24 @@ const formatTransactionTable = async (trans, lastYearOnly: boolean) => {
     resolve(mustache.render(template, params));
   });
 };
+
+app.get('/trans/:accId', ensureLoggedIn, async (req: express.Request, res: express.Response) => {
+  res.type('html');
+  res.charset = 'utf-8';
+  try {
+
+    const { user } = extractUserFromRequestSession(req);
+    const account = await exactQuery.getAccount(user, req.params.accId);
+    res.write('Listing transaction lines for ' + account.Name + ':<br><br>\n');
+    console.log('listing');
+    const trans = await exactQuery.getTransactionsObj(user, req.params.accId);
+    res.write( await formatTransactionTable(trans, false));
+    res.write('<br><br><a href="/preview-mail/' + account.ID + '">Preview Email</a>');
+  } catch (e) {
+    res.write('ERROR: ' + JSON.stringify(e));
+  }
+  res.end();
+});
 
 const makeIncassoMail = async (account, trans) => {
   const variables = {
