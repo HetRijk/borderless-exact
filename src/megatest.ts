@@ -44,9 +44,12 @@ function extractMailSettingsFromRequestSession(req: express.Request)  {
 
 const strategy = new ExactStrategy(
   {
-  clientID: 'f5fcbe04-c19e-45c4-8aa5-f9316d70bb0d',
-  clientSecret: 'WhKLQKKQjkOY',
-  callbackURL: 'http://localhost:3000/auth/callback',
+  clientID: '1a8b565e-1f29-4bb1-ba28-fd6b16554bf0',
+  // clientID: 'f5fcbe04-c19e-45c4-8aa5-f9316d70bb0d',
+  clientSecret:  'OOexJOZHwJSv',
+  // clientSecret: 'WhKLQKKQjkOY',
+  callbackURL: 'http://home.jlicht.org:3000/auth/callback',
+  // callbackURL: 'http://localhost:3000/auth/callback',
 }, (accessToken, refreshToken, profile, done) => {
   User.findOrCreate(profile.UserID,
                     {accessToken, refreshToken, profile} ,

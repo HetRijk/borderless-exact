@@ -69,7 +69,7 @@
   "deploy": {
     "destinations": [
       {
-        "dest": "root@aegee.jlicht.org:/root/borderless-exact-auto",
+        "dest": "tinker:/home/jelle/src/borderless-exact-auto",
         "name": "Host #1",
         "alias": "host-1"
       }
