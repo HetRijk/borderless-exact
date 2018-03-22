@@ -1,10 +1,10 @@
 import * as nodemailer from 'nodemailer';
 
 export default class MailSettings {
-  private _server : string;
-  private _email : string;
-  private _password : string;
-  private _port : number;
+  public _server : string;
+  public _email : string;
+  public _password : string;
+  public _port : number;
 
   public constructor(server, email, password) {
     this._server = server;

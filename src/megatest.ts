@@ -207,12 +207,20 @@ app.get('/accounts', ensureLoggedIn, async (req: express.Request , res: express.
   let accounts;
   res.type('html');
   try {
+    console.log('starting listing');
     res.write('Listing all accounts...<br><br>\n');
     const { user } = extractUserFromRequestSession(req);
-    if (!session.accounts) {
-      accounts = await exactQuery.getAccounts(user);
-      session.accounts = accounts.reverse();
+    console.log('starting user stuff');
+    if(!session) {
+      console.log('wtf no session');
     }
+    if (!session.accounts) {
+      console.log('not cached');
+      session.accounts = (await exactQuery.getAccounts(user)).reverse();
+    }
+    accounts = session.accounts;
+
+    console.log(`Accounts len: ${accounts.length}`);
     const template = `<table>{{#.}}<tr>
       <td>{{Code}}</td>
       <td><a href="/account/{{ID}}">{{Name}}</a></td>
@@ -253,7 +261,8 @@ app.get('/preview-mail/:accId/', ensureLoggedIn, async (req: express.Request, re
 
 app.get('/send-mail/:accId', ensureLoggedIn, async (req: express.Request, res: express.Response) => {
   try {
-    const { session: {mail}} = extractMailSettingsFromRequestSession(req);
+    let { session: {mail}} = extractMailSettingsFromRequestSession(req);
+    mail = new MailSettings(mail._server, mail._email, mail._password);
     const { user } = extractUserFromRequestSession(req);
     const account = await exactQuery.getAccount(user, req.params.accId);
     const trans = await exactQuery.getTransactionsObj(user, req.params.accId); // TODO caching
@@ -276,7 +285,7 @@ app.get('/accbal/:id?', ensureLoggedIn, async (req: express.Request, res: expres
     let session = req.session!;
     const { user } = extractUserFromRequestSession(req);
     if (!session.accounts) {
-      (await exactQuery.getAccounts(user)).reverse();
+      session.accounts = (await exactQuery.getAccounts(user)).reverse();
     }
     let accounts = session.accounts;
     const id = +req.params.id || 0;

@@ -124,8 +124,8 @@ export class ExactQuery {
     return this.query( userCompound, 'financialtransaction/TransactionLines', {
       $select: 'Description,AmountDC,Date,FinancialYear,FinancialPeriod',
       $filter: `Account eq guid'${id}'` +
-        ' and (GLAccountCode eq trim(\'1300\')' +
-        ' or GLAccountCode eq trim(\'1600\'))', // Debiteuren of Crediteuren grootboeken
+        ' and (GLAccountCode eq trim(\'1400\')' +
+        ' or GLAccountCode eq trim(\'1500\'))', // Debiteuren of Crediteuren grootboeken
       $orderby: 'Date',
     });
   }
@@ -155,8 +155,8 @@ export class ExactQuery {
     return this.query(userCompound, 'financialtransaction/TransactionLines', {
       $select: 'AmountDC',
       $filter: `Account eq guid'${id}'` +
-        ' and (GLAccountCode eq trim(\'1300\')' +
-        ' or GLAccountCode eq trim(\'1600\'))', // Debiteuren of Crediteuren grootboeken
+        ' and (GLAccountCode eq trim(\'1400\')' +
+        ' or GLAccountCode eq trim(\'1500\'))', // Debiteuren of Crediteuren grootboeken
       $apply: 'aggregate(AmountDC with sum as Total',
     });
   }
