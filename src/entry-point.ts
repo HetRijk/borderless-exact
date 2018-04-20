@@ -8,15 +8,13 @@ import { AuthTokenRefresh } from './utils/TokenUtils';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as session from 'express-session';
-import MailSettings from './main/MailSettings';
+import MailSettings from './utils/MailSettings';
 import * as mustache from 'mustache';
 import { ExactQuery } from './utils/Query';
 
 import * as fs from 'fs';
 const app = express();
 const passport = new Passport();
-
-// type Account = any; //TODO: Figure out what stuff is in there
 
 const User = new Storage<IUserCompound>();
 const tokenRefresh = new AuthTokenRefresh();
@@ -123,7 +121,7 @@ app.get('/', (req, res) => {
 
 app.get('/logout', (req, res) => {
   if (req.session) {
-    req.session.destroy();
+  req.session.destroy(() => console.log('Somebody logged out'));
   }
   req.logout();
   res.redirect('/');
