@@ -13,4 +13,4 @@ EXPOSE 3000 # TODO: refactor exposed port
 ENV NODE_ENV="production"
 
 USER node
-CMD ["node" "dist/main/index.js"]
+CMD ["node" "dist/megatest.js"]
