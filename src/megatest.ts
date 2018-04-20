@@ -122,6 +122,9 @@ app.get('/', (req, res) => {
 });
 
 app.get('/logout', (req, res) => {
+  if (req.session) {
+    req.session.destroy();
+  }
   req.logout();
   res.redirect('/');
 });
